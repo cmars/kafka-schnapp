@@ -7,16 +7,16 @@ description: |
     - Building real-time streaming applications that transform or react to the streams of data 
 
 grade: stable
-confinement: classic
+confinement: strict
 
 apps:
   kafka:
     command: start-kafka-wrapper.bash
     daemon: simple
-    plugs: [network, network-bind]
+    plugs: [network, network-bind, removable-media]
   zookeeper:
     command: start-zookeeper-wrapper.bash
-    plugs: [network, network-bind]
+    plugs: [network, network-bind, removable-media]
 
 parts:
   deps:
