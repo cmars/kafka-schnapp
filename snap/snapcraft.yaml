@@ -1,0 +1,60 @@
+name: kafka-cmars
+version: '2.1.0'
+summary: Apache Kafka is a distributed streaming platform
+description: |
+    Kafka is generally used for two broad classes of applications:
+    - Building real-time streaming data pipelines that reliably get data between systems or applications
+    - Building real-time streaming applications that transform or react to the streams of data 
+
+grade: stable
+confinement: classic
+
+apps:
+  kafka:
+    command: start-kafka-wrapper.bash
+    daemon: simple
+    plugs: [network, network-bind]
+  zookeeper:
+    command: start-zookeeper-wrapper.bash
+    plugs: [network, network-bind]
+
+parts:
+  deps:
+    stage-packages:
+    - default-jre-headless
+    build-packages:
+    - default-jdk-headless
+    - unzip
+    plugin: nil
+    override-build: |-
+      # NOTE: snapcraft gradle plugin currently does not work with kafka build
+      wget -O gradle-5.1.1-bin.zip https://services.gradle.org/distributions/gradle-5.1.1-bin.zip
+      unzip gradle-5.1.1-bin.zip
+  gradle:
+    after:
+    - deps
+    plugin: nil
+    source: https://github.com/apache/kafka.git
+    source-depth: 1
+    source-tag: 2.1.0
+    override-build: |-
+      export PATH=$(pwd)/../../deps/build/gradle-5.1.1/bin:$PATH
+      gradle
+      ./gradlew releaseTarGz
+  install:
+    after:
+    - gradle
+    plugin: nil
+    override-build: |-
+      cp ../../../snap/local/*.bash $SNAPCRAFT_PART_INSTALL
+      tarball=$(pwd)/../../gradle/build/core/build/distributions/kafka_2.11-2.1.0.tgz
+      mkdir -p $SNAPCRAFT_PART_INSTALL/opt/kafka
+      (cd $SNAPCRAFT_PART_INSTALL/opt/kafka; tar --strip-components=1 -xzvf $tarball)
+    stage:
+    - opt
+    - start-kafka-wrapper.bash
+    - start-zookeeper-wrapper.bash
+    prime:
+    - opt
+    - start-kafka-wrapper.bash
+    - start-zookeeper-wrapper.bash
