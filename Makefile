@@ -8,7 +8,7 @@ all: snap charm
 snap: kafka_$(KAFKA_VERSION)_amd64.snap
 
 kafka_$(KAFKA_VERSION)_amd64.snap:
-	snapcraft cleanbuild
+	snapcraft
 
 .PHONY: charm
 charm: charm/builds/kafka
