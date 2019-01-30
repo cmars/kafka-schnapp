@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
 import os
+from subprocess import check_call
+import yaml
 
 from charmhelpers.core import hookenv, unitdata
-from charms.layer.kafka import Kafka, KAFKA_PORT
+from charms.layer.kafka import Kafka, KAFKA_PORT, KAFKA_SNAP
 from charms.reactive import set_state, remove_state, when, when_not, hook
 from charms.reactive.helpers import data_changed
 
@@ -32,8 +35,12 @@ def upgrade():
 
 
 def install_snap():
-    snap_file = glob.glob(os.path.join(hookenv.charm_dir(), "*.snap")).sorted()[::-1][0]
-    check_call(['snap', 'install', '--dangerous', snap_file])
+    snap_files = sorted(glob.glob(os.path.join(hookenv.charm_dir(), "*.snap")))[::-1]
+    if not snap_files:
+        hookenv.status_set('error', 'missing kafka snap, invalid charm build')
+        return
+    check_call(['snap', 'install', '--dangerous', snap_files[0]])
+    set_state('kafka.available')
 
 
 @when('kafka.available')
@@ -63,7 +70,7 @@ def configure_kafka(zk):
     set_state('kafka.started')
     hookenv.status_set('active', 'ready')
     # set app version string for juju status output
-    kafka_version = get_package_version(SNAP_NAME) or 'unknown'
+    kafka_version = get_package_version(KAFKA_SNAP) or 'unknown'
     hookenv.application_version_set(kafka_version)
 
 

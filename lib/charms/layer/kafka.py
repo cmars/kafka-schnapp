@@ -61,11 +61,11 @@ class Kafka(object):
         else:
             context['bind_addr'] = hookenv.unit_private_ip()
 
-    	render(source="server.properties",
-            	target=os.path.join(KAFKA_SNAP_DATA, 'server.properties'),
-            	owner="root",
-            	perms=0o644,
-            	context=context)
+        render(source="server.properties",
+                target=os.path.join(KAFKA_SNAP_DATA, 'server.properties'),
+                owner="root",
+                perms=0o644,
+                context=context)
 
         if log_dir:
             os.makedirs(log_dir, mode=0o700, exist_ok=True)
