@@ -69,7 +69,7 @@ class Kafka(object):
 
         if log_dir:
             os.makedirs(log_dir, mode=0o700, exist_ok=True)
-            shutil.chown(log_dir, user='kafka')
+            shutil.chown(log_dir, user='root')
 
         self.restart()
 

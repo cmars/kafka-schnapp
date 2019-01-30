@@ -24,6 +24,6 @@ storage:
     type: filesystem
     description: Directory where log files will be stored
     minimum-size: 20M
-    location: /mnt/kafka
+    location: /media/kafka
     multiple:
       range: "0-1"

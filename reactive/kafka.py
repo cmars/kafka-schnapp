@@ -35,11 +35,12 @@ def upgrade():
 
 
 def install_snap():
-    snap_files = sorted(glob.glob(os.path.join(hookenv.charm_dir(), "*.snap")))[::-1]
+    snap_files = sorted(glob.glob(os.path.join(hookenv.charm_dir(), "{}*.snap".format(KAFKA_SNAP))))[::-1]
     if not snap_files:
         hookenv.status_set('error', 'missing kafka snap, invalid charm build')
         return
     check_call(['snap', 'install', '--dangerous', snap_files[0]])
+    check_call(['snap', 'connect', '{}:removable-media'.format(KAFKA_SNAP)])
     set_state('kafka.available')
 
 
