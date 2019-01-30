@@ -28,3 +28,8 @@ clean-charm:
 clean-snap:
 	snapcraft clean
 
+sysdeps: /snap/bin/charm /snap/bin/snapcraft
+/snap/bin/charm:
+	sudo snap install charm --classic
+/snap/bin/snapcraft:
+	sudo snap install snapcraft --classic
