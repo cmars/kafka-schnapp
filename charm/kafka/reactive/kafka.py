@@ -41,6 +41,8 @@ def install_snap():
         return
     check_call(['snap', 'install', '--dangerous', snap_files[0]])
     check_call(['snap', 'connect', '{}:removable-media'.format(KAFKA_SNAP)])
+    # Disable the zookeeper daemon included in the snap
+    check_call(['systemctl', 'disable', 'snap.{}.zookeeper.service'.format(KAFKA_SNAP)])
     set_state('kafka.available')
 
 

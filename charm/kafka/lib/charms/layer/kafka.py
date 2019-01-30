@@ -26,7 +26,7 @@ from charmhelpers.core.templating import render
 
 
 KAFKA_PORT=9092
-KAFKA_SNAP='kafka-cmars'
+KAFKA_SNAP='kafka'
 KAFKA_SERVICE='snap.{}.kafka.service'.format(KAFKA_SNAP)
 KAFKA_SNAP_DATA='/var/snap/{}/current'.format(KAFKA_SNAP)
 

@@ -1,4 +1,4 @@
-name: kafka-cmars
+name: kafka
 version: '2.1.0'
 summary: Apache Kafka is a distributed streaming platform
 description: |
@@ -16,6 +16,7 @@ apps:
     plugs: [network, network-bind, removable-media]
   zookeeper:
     command: start-zookeeper-wrapper.bash
+    daemon: simple
     plugs: [network, network-bind, removable-media]
 
 parts:

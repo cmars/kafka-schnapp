@@ -8,7 +8,7 @@ no concern over auto-upgrades in snaps.
 
 Much of the charm implementation is borrowed from the Apache Bigtop kafka
 charm, but it's been heavily simplified and pared down. Jinja templating is
-used instead of puppet, and a few helper functions that were imported from
+used instead of Puppet, and a few helper functions that were imported from
 libraries are inlined.
 
 This charm does not require any configuration. It relates to zookeeper and
