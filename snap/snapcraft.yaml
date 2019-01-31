@@ -1,4 +1,5 @@
 name: kafka
+base: core18
 version: '2.1.0'
 summary: Apache Kafka is a distributed streaming platform
 description: |
@@ -42,20 +43,18 @@ parts:
       export PATH=$(pwd)/../../deps/build/gradle-5.1.1/bin:$PATH
       gradle
       ./gradlew releaseTarGz
+  wrapper:
+    plugin: dump
+    source: snap/local
   install:
     after:
     - gradle
     plugin: nil
     override-build: |-
-      cp ../../../snap/local/*.bash $SNAPCRAFT_PART_INSTALL
       tarball=$(pwd)/../../gradle/build/core/build/distributions/kafka_2.11-2.1.0.tgz
       mkdir -p $SNAPCRAFT_PART_INSTALL/opt/kafka
       (cd $SNAPCRAFT_PART_INSTALL/opt/kafka; tar --strip-components=1 -xzvf $tarball)
     stage:
     - opt
-    - start-kafka-wrapper.bash
-    - start-zookeeper-wrapper.bash
     prime:
     - opt
-    - start-kafka-wrapper.bash
-    - start-zookeeper-wrapper.bash
