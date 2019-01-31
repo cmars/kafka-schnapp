@@ -39,6 +39,9 @@ def install_snap():
     if not snap_files:
         hookenv.status_set('error', 'missing kafka snap, invalid charm build')
         return
+    # Need to install the core snap explicit. If not, there's no slots for removable-media on a bionic install.
+    # Not sure if that's a snapd bug or intended behavior.
+    check_call(['snap', 'install', 'core'])
     check_call(['snap', 'install', '--dangerous', snap_files[0]])
     check_call(['snap', 'connect', '{}:removable-media'.format(KAFKA_SNAP)])
     # Disable the zookeeper daemon included in the snap, only run kafka
