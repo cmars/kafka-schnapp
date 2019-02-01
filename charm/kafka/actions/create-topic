@@ -37,11 +37,11 @@ topic_replication = hookenv.action_get('replication')
 if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE):
     zookeepers = kafkautils.get_zookeepers()
     try:
-        output = subprocess.check_call(['kafka.topics',
+        output = subprocess.check_call(['/snap/bin/kafka.topics',
                         '--zookeeper', zookeepers, '--create',
                         '--topic', topic_name,
-                        '--partitions', topic_partitions,
-                        '--replication-factor', topic_replication])
+                        '--partitions', str(topic_partitions),
+                        '--replication-factor', str(topic_replication)])
     except subprocess.CalledProcessError as e:
         kafkautils.fail('Kafka command failed: {}'.format(e.output))
     else:

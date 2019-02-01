@@ -19,7 +19,6 @@ import kafkautils
 import subprocess
 
 from charmhelpers.core import hookenv, host
-from charms.layer.apache_bigtop_base import get_layer_opts
 from charms.reactive import is_state
 
 from charms.layer.kafka import KAFKA_PORT, KAFKA_SERVICE
@@ -39,11 +38,12 @@ if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE)
     port = KAFKA_PORT
     zookeepers = kafkautils.get_zookeepers()
     try:
-        output = subprocess.check_output(['kafka.console-consumer',
-                              '--broker-list', '{}:{}'.format(host, port),
+        output = subprocess.check_output(['/snap/bin/kafka.console-consumer',
+                              '--bootstrap-server', '{}:{}'.format(host, port),
                               '--topic', topic_name,
-                              '--partition', topic_partition,
-                              '--no-wait-at-logend'])
+                              '--partition', str(topic_partition),
+                              '--from-beginning',
+                              '--timeout-ms', '1000'])
     except subprocess.CalledProcessError as e:
         kafkautils.fail('Kafka command failed: {}'.format(e.output))
     else:
