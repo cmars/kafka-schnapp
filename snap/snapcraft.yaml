@@ -19,6 +19,36 @@ apps:
     command: start-zookeeper-wrapper.bash
     daemon: simple
     plugs: [network, network-bind, removable-media]
+  topics:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: kafka-topics.sh
+  console-consumer:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: kafka-console-consumer.sh
+  console-producer:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: kafka-console-producer.sh
+  consumer-groups:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: kafka-consumer-groups.sh
+  reassign-partitions:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: kafka-reassign-partitions.sh
+  zookeeper-shell:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: zookeeper-shell.sh
 
 parts:
   deps:
