@@ -27,3 +27,8 @@ storage:
     location: /media/kafka
     multiple:
       range: "0-1"
+resources:
+  kafka:
+    type: file
+    filename: kafka.snap
+    description: "Kafka snap package"

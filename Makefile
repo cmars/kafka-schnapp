@@ -8,13 +8,17 @@ all: snap charm
 snap: kafka_$(KAFKA_VERSION)_amd64.snap
 
 kafka_$(KAFKA_VERSION)_amd64.snap:
-	snapcraft
+	SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY=8G snapcraft
+
+.PHONY: fat-charm
+fat-charm: kafka_$(KAFKA_VERSION)_amd64.snap charm/builds/kafka
+	cp $< charm/kafka
+	$(MAKE) -C charm/kafka
 
 .PHONY: charm
 charm: charm/builds/kafka
 
-charm/builds/kafka: kafka_$(KAFKA_VERSION)_amd64.snap
-	cp $< charm/kafka
+charm/builds/kafka:
 	$(MAKE) -C charm/kafka
 
 .PHONY: clean
@@ -23,6 +27,7 @@ clean: clean-charm clean-snap
 .PHONY: clean-charm
 clean-charm:
 	$(RM) -r charm/builds charm/deps
+	$(RM) charm/kafka/*.snap
 
 .PHONY: clean-snap
 clean-snap:

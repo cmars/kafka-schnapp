@@ -35,18 +35,26 @@ def upgrade():
 
 
 def install_snap():
-    snap_files = sorted(glob.glob(os.path.join(hookenv.charm_dir(), "{}*.snap".format(KAFKA_SNAP))))[::-1]
-    if not snap_files:
-        hookenv.status_set('error', 'missing kafka snap, invalid charm build')
-        return
+    snap_file = get_snap_file_from_charm()
+    if not snap_file:
+        snap_file = hookenv.resource_get('kafka')
+    if not snap_file:
+        hookenv.status_set('blocked', 'missing kafka snap')
     # Need to install the core snap explicit. If not, there's no slots for removable-media on a bionic install.
     # Not sure if that's a snapd bug or intended behavior.
     check_call(['snap', 'install', 'core'])
-    check_call(['snap', 'install', '--dangerous', snap_files[0]])
+    check_call(['snap', 'install', '--dangerous', snap_file])
     check_call(['snap', 'connect', '{}:removable-media'.format(KAFKA_SNAP)])
     # Disable the zookeeper daemon included in the snap, only run kafka
     check_call(['systemctl', 'disable', 'snap.{}.zookeeper.service'.format(KAFKA_SNAP)])
     set_state('kafka.available')
+
+
+def get_snap_file_from_charm():
+    snap_files = sorted(glob.glob(os.path.join(hookenv.charm_dir(), "{}*.snap".format(KAFKA_SNAP))))[::-1]
+    if not snap_files:
+        return None
+    return snap_files[0]
 
 
 @when('kafka.available')
