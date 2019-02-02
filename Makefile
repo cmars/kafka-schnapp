@@ -11,7 +11,7 @@ kafka_$(KAFKA_VERSION)_amd64.snap:
 	SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY=8G snapcraft
 
 .PHONY: fat-charm
-fat-charm: kafka_$(KAFKA_VERSION)_amd64.snap charm/builds/kafka
+fat-charm: kafka_$(KAFKA_VERSION)_amd64.snap
 	cp $< charm/kafka
 	$(MAKE) -C charm/kafka
 

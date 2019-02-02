@@ -40,6 +40,7 @@ def install_snap():
         snap_file = hookenv.resource_get('kafka')
     if not snap_file:
         hookenv.status_set('blocked', 'missing kafka snap')
+        return
     # Need to install the core snap explicit. If not, there's no slots for removable-media on a bionic install.
     # Not sure if that's a snapd bug or intended behavior.
     check_call(['snap', 'install', 'core'])
