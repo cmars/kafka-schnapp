@@ -57,6 +57,7 @@ parts:
     build-packages:
     - default-jdk-headless
     - unzip
+    - wget
     plugin: nil
     override-build: |-
       # NOTE: snapcraft gradle plugin currently does not work with kafka build
