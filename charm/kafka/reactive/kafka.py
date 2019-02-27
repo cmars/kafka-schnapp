@@ -34,6 +34,14 @@ def upgrade():
     install_snap()
 
 
+@hook('stop')
+def uninstall():
+    try:
+        check_call(['snap', 'remove', 'kafka'])
+    except subprocess.CalledProcessError as e:
+        hookenv.log("failed to remove snap: {}".format(e))
+
+
 def install_snap():
     snap_file = get_snap_file_from_charm()
     if not snap_file:
