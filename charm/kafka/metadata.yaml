@@ -13,6 +13,8 @@ provides:
   client:
     interface: kafka
 requires:
+  certificates:
+    interface: tls-certificates
   zookeeper:
     interface: zookeeper
 min-juju-version: "2.4.0"

@@ -17,11 +17,18 @@ import glob
 import os
 from subprocess import check_call
 import yaml
+import socket
+import tempfile
+
+from pathlib import Path
+from OpenSSL import crypto
 
 from charmhelpers.core import hookenv, unitdata
-from charms.layer.kafka import Kafka, KAFKA_PORT, KAFKA_SNAP
+from charms.layer.kafka import Kafka, KAFKA_PORT, KAFKA_SNAP, KAFKA_SNAP_DATA
+from charms.layer import tls_client
 from charms.reactive import set_state, remove_state, when, when_not, hook
 from charms.reactive.helpers import data_changed
+from charmhelpers.core.hookenv import log
 
 
 @when_not('kafka.available')
@@ -49,7 +56,8 @@ def install_snap():
     if not snap_file:
         hookenv.status_set('blocked', 'missing kafka snap')
         return
-    # Need to install the core snap explicit. If not, there's no slots for removable-media on a bionic install.
+    # Need to install the core snap explicit. If not, there's
+    # no slots for removable-media on a bionic install.
     # Not sure if that's a snapd bug or intended behavior.
     check_call(['snap', 'install', 'core'])
     check_call(['snap', 'install', '--dangerous', snap_file])
@@ -78,7 +86,21 @@ def waiting_for_zookeeper_ready(zk):
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
 
 
-@when('kafka.available', 'zookeeper.ready')
+@when_not(
+    'kafka.ca.keystore.saved',
+    'kafka.server.keystore.saved'
+)
+@when('kafka.available')
+def waiting_for_certificates():
+    hookenv.status_set('waiting', 'waiting for easyrsa relation')
+
+
+@when(
+    'kafka.available',
+    'zookeeper.ready',
+    'kafka.ca.keystore.saved',
+    'kafka.server.keystore.saved'
+)
 @when_not('kafka.started')
 def configure_kafka(zk):
     hookenv.status_set('maintenance', 'setting up kafka')
@@ -166,7 +188,8 @@ def storage_attach():
     log_dir = os.path.join(mount, "logs")
     unitdata.kv().set('kafka.storage.log_dir', log_dir)
     hookenv.log('Kafka logs storage attached at {}'.format(log_dir))
-    # Stop Kafka; removing the kafka.started state will trigger a reconfigure if/when it's ready
+    # Stop Kafka; removing the kafka.started state will trigger
+    # a reconfigure if/when it's ready
     kafka = Kafka()
     kafka.close_ports()
     kafka.stop()
@@ -184,3 +207,172 @@ def storage_detaching():
     remove_state('kafka.started')
     hookenv.status_set('waiting', 'reconfiguring to use temporary storage')
     remove_state('kafka.storage.logs.attached')
+
+
+@when('certificates.available')
+def send_data():
+    # Send the data that is required to create a server certificate for
+    # this server.
+
+    # Use the private ip of this unit as the Common Name for the certificate.
+    common_name = hookenv.unit_private_ip()
+
+    # Create SANs that the tls layer will add to the server cert.
+    sans = [
+        common_name,
+        socket.gethostname(),
+    ]
+
+    # Request a server cert with this information.
+    tls_client.request_server_cert(
+        common_name,
+        sans,
+        crt_path=os.path.join(
+            KAFKA_SNAP_DATA,
+            "server.crt"
+        ),
+        key_path=os.path.join(
+            KAFKA_SNAP_DATA,
+            "server.key"
+        )
+    )
+    tls_client.request_client_cert(
+        'system:snap-kafka',
+        crt_path=os.path.join(
+            KAFKA_SNAP_DATA,
+            'client.crt',
+        ),
+        key_path=os.path.join(
+            KAFKA_SNAP_DATA,
+            'client.key'
+        )
+    )
+
+
+@when_file_changed(os.path.join(KAFKA_SNAP_DATA, "kafka.server.jks"))
+@when_file_changed(os.path.join(KAFKA_SNAP_DATA, "kafka.client.jks"))
+def restart_when_keystore_changed():
+    Kafka().restart()
+
+
+@when('tls_client.certs.changed')
+def import_srv_crt_to_keystore():
+    for cert_type in ('server', 'client'):
+        keystore_path = os.path.join(
+            KAFKA_SNAP_DATA,
+            "kafka.{}.jks".format(cert_type)
+        )
+        keystore_password = _keystore_password()
+        crt_path = os.path.join(
+            KAFKA_SNAP_DATA,
+            "{}.crt".format(cert_type)
+        )
+        key_path = os.path.join(
+            KAFKA_SNAP_DATA,
+            "{}.key".format(cert_type)
+        )
+        if os.path.isfile(crt_path) and os.path.isfile(key_path):
+            cert = open(crt_path, 'rt').read()
+            loaded_cert = crypto.load_certificate(
+                crypto.FILETYPE_PEM,
+                cert
+            )
+            key = open(key_path, 'rt').read()
+            loaded_key = crypto.load_privatekey(
+                crypto.FILETYPE_PEM,
+                key
+            )
+
+            cert_changed = data_changed(
+                'kafka_{}_certificate'.format(cert_type),
+                cert
+            )
+            log('server certificate changed {changed}'.format(changed=cert_changed))
+            if cert_changed:
+                log('server certificate changed')
+                pfx = crypto.PKCS12Type()
+                pfx.set_certificate(loaded_cert)
+                pfx.set_privatekey(loaded_key)
+                pfxdata = pfx.export(keystore_password)
+                fd, path = tempfile.mkstemp()
+                log('opening tmp file {}'.format(path))
+                try:
+                    with os.fdopen(fd, 'wb') as tmp:
+                        # write cert and private key to the pkcs12 file
+                        tmp.write(pfxdata)
+                        log('Writing pkcs12 temporary file {0}'.format(
+                            path
+                        ))
+                        tmp.close()
+                        log('importing pkcs12')
+                        # import the pkcs12 into the keystore
+                        check_call(
+                            '/snap/kafka/current/usr/lib/jvm/default-java/bin/keytool -v -importkeystore -srckeystore {path} -srcstorepass {password} -srcstoretype PKCS12 -destkeystore {keystore} -deststoretype JKS -deststorepass {password} --noprompt'.format(
+                                path=path,
+                                password=keystore_password,
+                                keystore=keystore_path
+                            ),
+                            shell=True
+                        )
+                        os.chmod(keystore_path, 0o440)
+                        remove_state('tls_client.certs.changed')
+                        set_state('kafka.{}.keystore.saved'.format(cert_type))
+                finally:
+                    os.remove(path)
+        else:
+            log('server certificate of key file missing'.format(
+                cert=os.path.isfile(crt_path),
+                key=os.path.isfile(key_path)
+            ))
+
+
+@when('tls_client.ca_installed')
+@when_not('kafka.ca.keystore.saved')
+def import_ca_crt_to_keystore():
+    service_name = hookenv.service_name()
+    ca_path = '/usr/local/share/ca-certificates/{0}.crt'.format(service_name)
+
+    if os.path.isfile(ca_path):
+        ca_cert = open(ca_path, 'rt').read()
+        changed = data_changed('ca_certificate', ca_cert)
+        if changed:
+            ca_keystore = os.path.join(
+                KAFKA_SNAP_DATA,
+                "kafka.server.truststore.jks"
+            )
+            password = _keystore_password()
+            check_call(
+                '/snap/kafka/current/usr/lib/jvm/default-java/bin/keytool -import -trustcacerts -keystore {keystore} -storepass  {keystorepass} -file {path} -noprompt'.format(
+                    path=ca_path,
+                    keystore=ca_keystore,
+                    keystorepass=password
+                ),
+                shell=True
+            )
+            os.chmod(ca_keystore, 0o440)
+            remove_state('tls_client.ca_installed')
+            set_state('kafka.ca.keystore.saved')
+
+
+def _keystore_password():
+    path = os.path.join(
+        KAFKA_SNAP_DATA,
+        "keystore.secret"
+    )
+    if not os.path.isfile(path):
+        _ensure_directory(path)
+        check_call(
+            ['head -c 32 /dev/urandom | base64 > {}'.format(path)],
+            shell=True
+        )
+        os.chmod(path, 0o440)
+    password = Path(path).read_text()
+    return password.rstrip()
+
+
+def _ensure_directory(path):
+    '''Ensure the parent directory exists creating directories if necessary.'''
+    directory = os.path.dirname(path)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    os.chmod(directory, 0o770)
