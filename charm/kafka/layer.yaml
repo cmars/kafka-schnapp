@@ -2,6 +2,8 @@ includes:
 - 'layer:basic'
 - 'interface:zookeeper'
 - 'interface:kafka'
+- 'interface:tls-certificates'
+- 'layer:tls-client'
 options:
   basic:
     packages:

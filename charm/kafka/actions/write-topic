@@ -15,13 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import kafkautils
 import subprocess
 
 from charmhelpers.core import hookenv, host
 from charms.reactive import is_state
 
-from charms.layer.kafka import KAFKA_PORT, KAFKA_SERVICE
+from charms.layer.kafka import KAFKA_PORT, KAFKA_SERVICE, KAFKA_SNAP_DATA
 
 
 if not is_state('kafka.started'):
@@ -31,6 +32,7 @@ if not is_state('kafka.started'):
 # Grab the business
 topic_name = hookenv.action_get('topic')
 data = hookenv.action_get('data')
+ssl_properties = os.path.join(KAFKA_SNAP_DATA, 'client-ssl.properties')
 
 # Write to the topic if kafka is running
 if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE):
@@ -40,7 +42,8 @@ if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE)
     try:
         output = subprocess.check_output(['/snap/bin/kafka.console-producer',
                               '--broker-list', '{}:{}'.format(host, port),
-                              '--topic', topic_name],
+                              '--topic', topic_name,
+                              '--producer.config', ssl_properties],
                               input=bytes(data, 'UTF-8'))
     except subprocess.CalledProcessError as e:
         kafkautils.fail('Kafka command failed: {}'.format(e.output))

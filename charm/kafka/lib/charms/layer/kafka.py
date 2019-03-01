@@ -19,13 +19,14 @@ import netifaces
 import re
 import shutil
 import socket
-from subprocess import check_output
+
+from pathlib import Path
 
 from charmhelpers.core import hookenv, host
 from charmhelpers.core.templating import render
 
 
-KAFKA_PORT=9092
+KAFKA_PORT=9093
 KAFKA_SNAP='kafka'
 KAFKA_SERVICE='snap.{}.kafka.service'.format(KAFKA_SNAP)
 KAFKA_SNAP_DATA='/var/snap/{}/current'.format(KAFKA_SNAP)
@@ -54,6 +55,19 @@ class Kafka(object):
             'port': KAFKA_PORT,
             'zookeeper_connection_string': zk_connect,
             'log_dirs': log_dir,
+            'keystore_password': _read_keystore_password(),
+            'ca_keystore': os.path.join(
+                KAFKA_SNAP_DATA,
+                "kafka.server.truststore.jks"
+            ),
+            'server_keystore': os.path.join(
+                KAFKA_SNAP_DATA,
+                "kafka.server.jks"
+            ),
+            'client_keystore': os.path.join(
+                KAFKA_SNAP_DATA,
+                "kafka.client.jks"
+            )
         }
         if network_interface:
             ip = get_ip_for_interface(network_interface)
@@ -61,11 +75,21 @@ class Kafka(object):
         else:
             context['bind_addr'] = hookenv.unit_private_ip()
 
-        render(source="server.properties",
-                target=os.path.join(KAFKA_SNAP_DATA, 'server.properties'),
-                owner="root",
-                perms=0o644,
-                context=context)
+        render(
+            source="client-ssl.properties",
+            target=os.path.join(KAFKA_SNAP_DATA, 'client-ssl.properties'),
+            owner="root",
+            perms=0o400,
+            context=context
+        )
+
+        render(
+            source="server.properties",
+            target=os.path.join(KAFKA_SNAP_DATA, 'server.properties'),
+            owner="root",
+            perms=0o644,
+            context=context
+        )
 
         if log_dir:
             os.makedirs(log_dir, mode=0o700, exist_ok=True)
@@ -93,7 +117,11 @@ def resolve_private_address(addr):
         ip = socket.gethostbyname(addr)
         return ip
     except socket.error as e:
-        hookenv.log('Unable to resolve private IP: %s (will attempt to guess)' % addr, hookenv.ERROR)
+        hookenv.log(
+            'Unable to resolve private IP: %s (will attempt to guess)' %
+            addr,
+            hookenv.ERROR
+        )
         hookenv.log('%s' % e, hookenv.ERROR)
         contained = contains_IP_pat.search(addr)
         if not contained:
@@ -145,3 +173,12 @@ def resolve_private_address(addr):
                     u"This machine does not have an interface '{}'".format(
                         network_interface))
             return ip
+
+
+def _read_keystore_password():
+    path = os.path.join(
+        KAFKA_SNAP_DATA,
+        "keystore.secret"
+    )
+    password = Path(path).read_text()
+    return password.rstrip()
