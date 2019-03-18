@@ -26,7 +26,7 @@ from OpenSSL import crypto
 from charmhelpers.core import hookenv, unitdata
 from charms.layer.kafka import Kafka, KAFKA_PORT, KAFKA_SNAP, KAFKA_SNAP_DATA
 from charms.layer import tls_client
-from charms.reactive import set_state, remove_state, when, when_not, hook
+from charms.reactive import set_state, remove_state, when, when_not, hook, when_file_changed
 from charms.reactive.helpers import data_changed
 from charmhelpers.core.hookenv import log
 
@@ -50,18 +50,22 @@ def uninstall():
 
 
 def install_snap():
-    snap_file = get_snap_file_from_charm()
-    if not snap_file:
-        snap_file = hookenv.resource_get('kafka')
-    if not snap_file:
-        hookenv.status_set('blocked', 'missing kafka snap')
-        return
     # Need to install the core snap explicit. If not, there's
     # no slots for removable-media on a bionic install.
     # Not sure if that's a snapd bug or intended behavior.
     check_call(['snap', 'install', 'core'])
-    check_call(['snap', 'install', '--dangerous', snap_file])
-    check_call(['snap', 'connect', '{}:removable-media'.format(KAFKA_SNAP)])
+
+    cfg = hookenv.config()
+    # Kafka's snap presedence is:
+    # 1. Included in snap
+    # 2. Included with resource of charm of 'kafka'
+    # 3. Snap store with release channel specified in config
+    snap_file = get_snap_file_from_charm() or hookenv.resource_get('kafka')
+    if snap_file:
+        check_call(['snap', 'install', '--dangerous', snap_file])
+    if not snap_file:
+        check_call(['snap', 'install', '--{}'.format(cfg['kafka-release-channel']), KAFKA_SNAP])
+
     # Disable the zookeeper daemon included in the snap, only run kafka
     check_call(['systemctl', 'disable', 'snap.{}.zookeeper.service'.format(KAFKA_SNAP)])
     set_state('kafka.available')
@@ -138,19 +142,16 @@ def configure_kafka_zookeepers(zk):
 
     """
     zks = zk.zookeepers()
-    network_interface = hookenv.config().get('network_interface')
     log_dir = unitdata.kv().get('kafka.storage.log_dir')
     if not(any((
             data_changed('zookeepers', zks),
-            data_changed('kafka.network_interface', network_interface),
             data_changed('kafka.storage.log_dir', log_dir)))):
         return
 
     hookenv.log('Checking Zookeeper configuration')
     hookenv.status_set('maintenance', 'updating zookeeper instances')
     kafka = Kafka()
-    kafka.configure_kafka(zks, network_interface=network_interface,
-                          log_dir=log_dir)
+    kafka.configure_kafka(zks, log_dir=log_dir)
     hookenv.status_set('active', 'ready')
 
 
@@ -290,16 +291,16 @@ def import_srv_crt_to_keystore():
             log('server certificate changed {changed}'.format(changed=cert_changed))
             if cert_changed:
                 log('server certificate changed')
-                pfx = crypto.PKCS12Type()
-                pfx.set_certificate(loaded_cert)
-                pfx.set_privatekey(loaded_key)
-                pfxdata = pfx.export(keystore_password)
+                pkcs12 = crypto.PKCS12Type()
+                pkcs12.set_certificate(loaded_cert)
+                pkcs12.set_privatekey(loaded_key)
+                pkcs12_data = pkcs12.export(keystore_password)
                 fd, path = tempfile.mkstemp()
                 log('opening tmp file {}'.format(path))
                 try:
                     with os.fdopen(fd, 'wb') as tmp:
                         # write cert and private key to the pkcs12 file
-                        tmp.write(pfxdata)
+                        tmp.write(pkcs12_data)
                         log('Writing pkcs12 temporary file {0}'.format(
                             path
                         ))
@@ -333,8 +334,9 @@ def import_ca_crt_to_keystore():
     ca_path = '/usr/local/share/ca-certificates/{0}.crt'.format(service_name)
 
     if os.path.isfile(ca_path):
-        ca_cert = open(ca_path, 'rt').read()
-        changed = data_changed('ca_certificate', ca_cert)
+        with open(ca_path, 'rt') as f:
+            ca_cert = f.read()
+            changed = data_changed('ca_certificate', ca_cert)
         if changed:
             ca_keystore = os.path.join(
                 KAFKA_SNAP_DATA,

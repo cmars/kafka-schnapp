@@ -12,7 +12,7 @@ kafka_$(KAFKA_VERSION)_amd64.snap:
 
 .PHONY: fat-charm
 fat-charm: kafka_$(KAFKA_VERSION)_amd64.snap
-	cp $< charm/kafka
+	cp $< charm/kafka/
 	$(MAKE) -C charm/kafka
 
 .PHONY: charm
