@@ -4,7 +4,3 @@ includes:
 - 'interface:kafka'
 - 'interface:tls-certificates'
 - 'layer:tls-client'
-options:
-  basic:
-    packages:
-    - python3-netifaces

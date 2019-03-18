@@ -21,7 +21,6 @@ scales horizontally by adding units. It supports Juju storage.
 The snap uses strict confinement with the removable-media plug to support
 storage.
 
-
     juju deploy ./charm/builds/kafka
     juju deploy zookeeper
     juju relate kafka zookeeper
@@ -29,6 +28,10 @@ storage.
 The charm also supports storage:
 
     juju add-storage kafka/0 logs=1G
+
+# Notes
+
+The Kafka charm requires at least 4GB of memory.
 
 # Details
 

@@ -15,7 +15,6 @@
 
 import ipaddress
 import os
-import netifaces
 import re
 import shutil
 import socket
@@ -29,8 +28,7 @@ from charmhelpers.core.templating import render
 KAFKA_PORT=9093
 KAFKA_SNAP='kafka'
 KAFKA_SERVICE='snap.{}.kafka.service'.format(KAFKA_SNAP)
-KAFKA_SNAP_DATA='/var/snap/{}/current'.format(KAFKA_SNAP)
-
+KAFKA_SNAP_DATA='/var/snap/{}/common'.format(KAFKA_SNAP)
 
 class Kafka(object):
 
@@ -40,7 +38,7 @@ class Kafka(object):
     def close_ports(self):
         hookenv.close_port(KAFKA_PORT)
 
-    def configure_kafka(self, zk_units, network_interface=None, log_dir=None):
+    def configure_kafka(self, zk_units, log_dir=None):
         # Get ip:port data from our connected zookeepers
         zks = []
         for unit in zk_units:
@@ -67,13 +65,9 @@ class Kafka(object):
             'client_keystore': os.path.join(
                 KAFKA_SNAP_DATA,
                 "kafka.client.jks"
-            )
+            ),
+            'bind_addr': hookenv.unit_private_ip()
         }
-        if network_interface:
-            ip = get_ip_for_interface(network_interface)
-            context['bind_addr'] = ip
-        else:
-            context['bind_addr'] = hookenv.unit_private_ip()
 
         render(
             source="client-ssl.properties",
@@ -107,7 +101,6 @@ class Kafka(object):
     def stop(self):
         host.service_stop(KAFKA_SERVICE)
 
-
 def resolve_private_address(addr):
     IP_pat = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
     contains_IP_pat = re.compile(r'\d{1,3}[-.]\d{1,3}[-.]\d{1,3}[-.]\d{1,3}')
@@ -127,53 +120,6 @@ def resolve_private_address(addr):
         if not contained:
             raise ValueError('Unable to resolve or guess IP from private-address: %s' % addr)
         return contained.groups(0).replace('-', '.')
-
-
-    def get_ip_for_interface(self, network_interface):
-        """
-        Helper to return the ip address of this machine on a specific
-        interface.
-
-        @param str network_interface: either the name of the
-        interface, or a CIDR range, in which we expect the interface's
-        ip to fall. Also accepts 0.0.0.0 (and variants, like 0/0) as a
-        special case, which will simply return what you passed in.
-
-        """
-        if network_interface.startswith('0') or network_interface == '::':
-            # Allow users to reset the charm to listening on any
-            # interface.  Allow operators to specify this however they
-            # wish (0.0.0.0, ::, 0/0, etc.).
-            return network_interface
-
-        # Is this a CIDR range, or an interface name?
-        is_cidr = len(network_interface.split(".")) == 4 or len(
-            network_interface.split(":")) == 8
-
-        if is_cidr:
-            interfaces = netifaces.interfaces()
-            for interface in interfaces:
-                try:
-                    ip = netifaces.ifaddresses(interface)[2][0]['addr']
-                except KeyError:
-                    continue
-
-                if ipaddress.ip_address(ip) in ipaddress.ip_network(
-                        network_interface):
-                    return ip
-
-            raise Exception(
-                u"This machine has no interfaces in CIDR range {}".format(
-                    network_interface))
-        else:
-            try:
-                ip = netifaces.ifaddresses(network_interface)[2][0]['addr']
-            except ValueError:
-                raise BigtopError(
-                    u"This machine does not have an interface '{}'".format(
-                        network_interface))
-            return ip
-
 
 def _read_keystore_password():
     path = os.path.join(
