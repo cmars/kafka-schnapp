@@ -4,6 +4,9 @@ KAFKA_VERSION := $(shell awk '/version:/ {print $$2}' snap/snapcraft.yaml | head
 .PHONY: all
 all: snap charm
 
+.PHONY: schnapp
+schnapp: snap fat-charm
+
 .PHONY: snap
 snap: kafka_$(KAFKA_VERSION)_amd64.snap
 

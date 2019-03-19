@@ -62,8 +62,10 @@ def install_snap():
     # 3. Snap store with release channel specified in config
     snap_file = get_snap_file_from_charm() or hookenv.resource_get('kafka')
     if snap_file:
+        hookenv.log('Detected Kafka snap, installing {}'.format(snap_file))
         check_call(['snap', 'install', '--dangerous', snap_file])
     if not snap_file:
+        hookenv.log('No Kafka snap detected in charm, installing from snapstore with channel {}'.format(cfg['kafka-release-channel']))
         check_call(['snap', 'install', '--{}'.format(cfg['kafka-release-channel']), KAFKA_SNAP])
 
     # Disable the zookeeper daemon included in the snap, only run kafka
@@ -107,9 +109,11 @@ def waiting_for_certificates():
 )
 @when_not('kafka.started')
 def configure_kafka(zk):
+    if len(zk.zookeepers()) < 1:
+        hookenv.status_set('blocked', 'waiting for >= 1 zookeeper units')
+        return
+
     hookenv.status_set('maintenance', 'setting up kafka')
-    data_changed(  # Prime data changed for network interface
-        'kafka.network_interface', hookenv.config().get('network_interface'))
     log_dir = unitdata.kv().get('kafka.storage.log_dir')
     data_changed('kafka.storage.log_dir', log_dir)
     kafka = Kafka()
@@ -137,15 +141,16 @@ def configure_kafka_zookeepers(zk):
     As zks come and go, server.properties will be updated. When that file
     changes, restart Kafka and set appropriate status messages.
 
-    This method also handles the restart if our network_interface
-    config has changed.
-
     """
     zks = zk.zookeepers()
     log_dir = unitdata.kv().get('kafka.storage.log_dir')
     if not(any((
             data_changed('zookeepers', zks),
             data_changed('kafka.storage.log_dir', log_dir)))):
+        return
+
+    if len(zks) < 1:
+        hookenv.status_set('blocked', 'waiting for >= 1 zookeeper units')
         return
 
     hookenv.log('Checking Zookeeper configuration')
@@ -355,6 +360,22 @@ def import_ca_crt_to_keystore():
             remove_state('tls_client.ca_installed')
             set_state('kafka.ca.keystore.saved')
 
+@when('kafka.started')
+def health_check():
+    # Health check will attempt to restart Kafka service, if the service is not running
+    kafka = Kafka()
+    if kafka.is_running():
+        hookenv.status_set('active', 'ready')
+        return
+
+    for i in range(3):
+        hookenv.status_set('maintenance', 'attempting to restart kafka, attempt: {}'.format(i+1))
+        kafka.restart()
+        if kafka.is_running():
+            hookenv.status_set('active', 'ready')
+            return
+
+    hookenv.status_set('blocked', 'failed to start kafka; check syslog')
 
 def _keystore_password():
     path = os.path.join(

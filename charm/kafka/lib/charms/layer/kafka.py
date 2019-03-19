@@ -31,7 +31,6 @@ KAFKA_SERVICE='snap.{}.kafka.service'.format(KAFKA_SNAP)
 KAFKA_SNAP_DATA='/var/snap/{}/common'.format(KAFKA_SNAP)
 
 class Kafka(object):
-
     def open_ports(self):
         hookenv.open_port(KAFKA_PORT)
 
@@ -100,6 +99,9 @@ class Kafka(object):
 
     def stop(self):
         host.service_stop(KAFKA_SERVICE)
+    
+    def is_running(self):
+        return host.service_running(KAFKA_SERVICE)
 
 def resolve_private_address(addr):
     IP_pat = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
