@@ -15,11 +15,12 @@
 
 import glob
 import os
-from subprocess import check_call
 import yaml
 import socket
 import tempfile
+import shutil
 
+from subprocess import check_call, CalledProcessError
 from pathlib import Path
 from OpenSSL import crypto
 
@@ -30,26 +31,26 @@ from charms.reactive import set_state, remove_state, when, when_not, hook, when_
 from charms.reactive.helpers import data_changed
 from charmhelpers.core.hookenv import log
 
-
 @when_not('kafka.available')
 def install():
     install_snap()
 
-
 @hook('upgrade-charm')
 def upgrade():
-    install_snap()
+    install_snap(upgrade=True)
 
+@hook('config-changed')
+def config_changed():
+    install_snap(upgrade=True)
 
 @hook('stop')
 def uninstall():
     try:
         check_call(['snap', 'remove', 'kafka'])
-    except subprocess.CalledProcessError as e:
+    except CalledProcessError as e:
         hookenv.log("failed to remove snap: {}".format(e))
 
-
-def install_snap():
+def install_snap(upgrade=False):
     # Need to install the core snap explicit. If not, there's
     # no slots for removable-media on a bionic install.
     # Not sure if that's a snapd bug or intended behavior.
@@ -62,11 +63,15 @@ def install_snap():
     # 3. Snap store with release channel specified in config
     snap_file = get_snap_file_from_charm() or hookenv.resource_get('kafka')
     if snap_file:
-        hookenv.log('Detected Kafka snap, installing {}'.format(snap_file))
+        hookenv.log('Detected Kafka snap, installing/refreshing {}'.format(snap_file))
         check_call(['snap', 'install', '--dangerous', snap_file])
     if not snap_file:
         hookenv.log('No Kafka snap detected in charm, installing from snapstore with channel {}'.format(cfg['kafka-release-channel']))
-        check_call(['snap', 'install', '--{}'.format(cfg['kafka-release-channel']), KAFKA_SNAP])
+        
+        if upgrade:
+            check_call(['snap', 'refresh', '--{}'.format(cfg['kafka-release-channel']), KAFKA_SNAP])
+        else:
+            check_call(['snap', 'install', '--{}'.format(cfg['kafka-release-channel']), KAFKA_SNAP])
 
     # Disable the zookeeper daemon included in the snap, only run kafka
     check_call(['systemctl', 'disable', 'snap.{}.zookeeper.service'.format(KAFKA_SNAP)])
