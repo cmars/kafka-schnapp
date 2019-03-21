@@ -45,10 +45,9 @@ class Kafka(object):
             zks.append("%s:%s" % (ip, unit['port']))
         zks.sort()
         zk_connect = ",".join(zks)
-        service, unit_num = os.environ['JUJU_UNIT_NAME'].split('/', 1)
 
         context = {
-            'broker_id': unit_num,
+            'broker_id': os.environ['JUJU_UNIT_NAME'].split('/', 1)[1],
             'port': KAFKA_PORT,
             'zookeeper_connection_string': zk_connect,
             'log_dirs': log_dir,
