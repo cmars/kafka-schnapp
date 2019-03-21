@@ -2,7 +2,11 @@
 KAFKA_VERSION := $(shell awk '/version:/ {print $$2}' snap/snapcraft.yaml | head -1 | sed "s/'//g")
 
 .PHONY: all
-all: snap charm
+all: snap lint charm
+
+.PHONY: lint
+lint:
+	flake8 --ignore=E121,E123,E126,E226,E24,E704,E265 charm/kafka
 
 .PHONY: schnapp
 schnapp: snap fat-charm
