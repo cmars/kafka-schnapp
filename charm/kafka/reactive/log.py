@@ -1,5 +1,7 @@
 import os
 
+from charms.layer.kafka import Kafka
+
 from charmhelpers.core import hookenv, unitdata
 
 from charms.reactive import remove_state, hook, set_flag
@@ -33,7 +35,8 @@ def storage_attach():
 @hook('logs-storage-detaching')
 def storage_detaching():
     unitdata.kv().unset('kafka.storage.log_dir')
-
+    Kafka().stop()
+    
     log('log storage detatched, reconfiguring to use temporary storage')
 
     remove_state('kafka.configured')
