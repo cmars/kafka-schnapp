@@ -2,7 +2,7 @@ from charms.layer.kafka import Kafka
 
 from charmhelpers.core import hookenv
 
-from charms.reactive import when, set_flag, set_state, clear_flag, remove_state
+from charms.reactive import when
 
 
 @when('kafka.available', 'zookeeper.ready')
@@ -11,10 +11,9 @@ def autostart_service():
     Attempt to restart the service if it is not running.
     '''
     kafka = Kafka()
-    zks = kafka.get_zks()
 
     if kafka.is_running():
-        hookenv.status_set('active', 'ready ({} zk unit(s))'.format(len(zks)))
+        hookenv.status_set('active', 'ready')
         return
 
     for i in range(3):
@@ -25,10 +24,7 @@ def autostart_service():
         )
         kafka.restart()
         if kafka.is_running():
-            hookenv.status_set(
-                'active',
-                'ready ({} zk unit(s))'.format(len(zks))
-            )
+            hookenv.status_set('active', 'ready')
             return
 
     hookenv.status_set('blocked', 'failed to start kafka; check syslog')

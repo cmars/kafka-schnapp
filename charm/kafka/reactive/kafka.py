@@ -19,14 +19,10 @@ from charms.layer.kafka import Kafka, KAFKA_PORT, KAFKA_SNAP
 
 from charmhelpers.core import hookenv, unitdata
 
-from charms.reactive import (set_state, remove_state, when, when_not,
-                             hook, clear_flag, is_flag_set, set_flag,
-                             when_any)
+from charms.reactive import (set_flag, when, when_not, hook,
+                             remove_state, set_state)
 from charms.reactive.helpers import data_changed
 
-from charmhelpers.core.hookenv import log
-
-from charms.layer import snap
 
 @when('snap.installed.kafka')
 @when_not('kafka.zk.disabled')
@@ -45,46 +41,8 @@ def upgrade_charm():
 
 @hook('config-changed')
 def config_changed():
-    remove_state('kafka.available')
     remove_state('kafka.configured')
     set_flag('kafka.force-reconfigure')
-
-
-@when('snap.installed.kafka')
-@when_not('kafka.configured')
-def configure():
-    kafka = Kafka()
-    zks = kafka.get_zks()
-    log_dir = unitdata.kv().get('kafka.storage.log_dir')
-    changed = any((
-        data_changed('kafka.zk_units', zks),
-        data_changed('kafka.log_dir', log_dir)
-    ))
-
-    if changed or is_flag_set('kafka.force-reconfigure'):
-        kafka.install(zk_units=zks, log_dir=log_dir)
-        kafka.open_ports()
-
-    clear_flag('kafka.force-reconfigure')
-    set_state('kafka.available')
-    set_state('kafka.configured')
-
-    hookenv.application_version_set(kafka.version())
-
-
-@when('snap.installed.kafka')
-@when_not(
-    'kafka.ca.keystore.saved',
-    'kafka.server.keystore.saved'
-)
-def waiting_for_certificates():
-    hookenv.status_set('waiting', 'waiting for easyrsa relation')
-
-
-@when('snap.installed.kafka')
-@when_not('zookeeper.ready')
-def waiting_for_zookeeper():
-    hookenv.status_set('waiting', 'waiting for zookeeper relation')
 
 
 @when(
@@ -93,34 +51,51 @@ def waiting_for_zookeeper():
     'kafka.ca.keystore.saved',
     'kafka.server.keystore.saved'
 )
-@when_not('kafka.available')
+@when_not('kafka.started')
 def configure_kafka(zk):
     hookenv.status_set('maintenance', 'setting up kafka')
-
     log_dir = unitdata.kv().get('kafka.storage.log_dir')
     data_changed('kafka.storage.log_dir', log_dir)
+    kafka = Kafka()
+    zks = zk.zookeepers()
+    kafka.install(zk_units=zks, log_dir=log_dir)
+    kafka.open_ports()
+    set_state('kafka.started')
+    hookenv.status_set('active', 'ready')
+    # set app version string for juju status output
+    kafka_version = kafka.version()
+    hookenv.application_version_set(kafka_version)
 
-    remove_state('kafka.configured')
-    set_flag('kafka.force-reconfigure')
 
-
-@when('kafka.configured')
-@when_any('zookeeper.started')
+@when('kafka.started', 'zookeeper.ready')
 def configure_kafka_zookeepers(zk):
-    """
-    Configure ready zookeepers and restart kafka if needed.
-
+    """Configure ready zookeepers and restart kafka if needed.
     As zks come and go, server.properties will be updated. When that file
     changes, restart Kafka and set appropriate status messages.
     """
     zks = zk.zookeepers()
-
-    if not data_changed('kafka.zk_units', zks):
+    log_dir = unitdata.kv().get('kafka.storage.log_dir')
+    if not(any((
+            data_changed('zookeepers', zks),
+            data_changed('kafka.storage.log_dir', log_dir)))):
         return
 
-    log('zookeeper(s) joined, forcing reconfiguration')
-    remove_state('kafka.configured')
-    set_flag('kafka.force-reconfigure')
+    hookenv.log('Checking Zookeeper configuration')
+    hookenv.status_set('maintenance', 'updating zookeeper instances')
+    kafka = Kafka()
+    kafka.install(zk_units=zks, log_dir=log_dir)
+    hookenv.status_set('active', 'ready')
+
+
+@when('kafka.started')
+@when_not('zookeeper.ready')
+def stop_kafka_waiting_for_zookeeper_ready():
+    hookenv.status_set('maintenance', 'zookeeper not ready, stopping kafka')
+    kafka = Kafka()
+    kafka.close_ports()
+    kafka.stop()
+    remove_state('kafka.started')
+    hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
 
 
 @when('client.joined', 'zookeeper.ready')

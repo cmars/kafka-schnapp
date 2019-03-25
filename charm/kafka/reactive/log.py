@@ -36,7 +36,7 @@ def storage_attach():
 def storage_detaching():
     unitdata.kv().unset('kafka.storage.log_dir')
     Kafka().stop()
-    
+
     log('log storage detatched, reconfiguring to use temporary storage')
 
     remove_state('kafka.configured')

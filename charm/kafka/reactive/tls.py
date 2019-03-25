@@ -6,7 +6,8 @@ from OpenSSL import crypto
 from subprocess import check_call
 
 from charms.layer import tls_client
-from charms.layer.kafka import keystore_password, KAFKA_SNAP_DATA, KAFKA_KEYTOOL_PATH
+from charms.layer.kafka import (keystore_password, KAFKA_SNAP_DATA,
+                                KAFKA_KEYTOOL_PATH)
 
 from charmhelpers.core import hookenv
 
