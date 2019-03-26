@@ -33,9 +33,8 @@ KAFKA_SNAP = 'kafka'
 KAFKA_SERVICE = 'snap.{}.kafka.service'.format(KAFKA_SNAP)
 BOOTSTRAP_ZK_SERVICE = 'snap.{}.zookeeper.service'.format(KAFKA_SNAP)
 KAFKA_SNAP_DATA = '/var/snap/{}/common'.format(KAFKA_SNAP)
-KAFKA_KEYTOOL_PATH = '/snap/{}/current/usr/lib/jvm/default-java/bin/keytool'.format(
-    KAFKA_SNAP
-)
+KAFKA_KEYTOOL_PATH = ('/snap/{}/current/usr/lib/jvm/default-java'
+                      '/bin/keytool').format(KAFKA_SNAP)
 
 
 class Kafka(object):
