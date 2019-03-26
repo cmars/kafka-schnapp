@@ -42,7 +42,6 @@ def upgrade_charm():
 
 @hook('config-changed')
 def config_changed():
-    remove_state('kafka.started')
     remove_state('kafka.zk.disabled')
 
 
