@@ -34,10 +34,22 @@ def disable_bootstrap_zk():
     set_state('kafka.zk.disabled')
 
 
+@when('kafka.available')
+@when_not('zookeeper.joined')
+def waiting_for_zookeeper():
+    hookenv.status_set('blocked', 'waiting for relation to zookeeper')
+
+
+@when('kafka.available', 'zookeeper.joined')
+@when_not('kafka.started', 'zookeeper.ready')
+def waiting_for_zookeeper_ready(zk):
+    hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
+
+
 @hook('upgrade-charm')
 def upgrade_charm():
     remove_state('kafka.started')
-    remove_state('kafka.zk.disabled')
+    remove_state('zookeeper.nrpe_helper.installed')
 
 
 @hook('config-changed')

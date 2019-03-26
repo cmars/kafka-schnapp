@@ -49,6 +49,11 @@ apps:
     plugs: [network, network-bind]
     environment:
       _wrapper_script: zookeeper-shell.sh
+  run-class:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: kafka-run-class.sh
 
 parts:
   deps:
