@@ -49,7 +49,6 @@ def waiting_for_zookeeper_ready(zk):
 @hook('upgrade-charm')
 def upgrade_charm():
     remove_state('kafka.started')
-    remove_state('zookeeper.nrpe_helper.installed')
 
 
 @hook('config-changed')

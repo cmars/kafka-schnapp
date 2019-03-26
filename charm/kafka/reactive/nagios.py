@@ -26,27 +26,27 @@ def setup_nagios(nagios):
         'object_name': 'kafka.server:type=ReplicaManager,\
 name=UnderReplicatedPartitions',
         'description': 'Number of under replicated partitions',
-        'crit': '!= 0',
+        'crit': 'val != 0',
     }, {
         'name': 'active_controller_count',
         'object_name': 'kafka.controller:type=KafkaController,\
 name=ActiveControllerCount',
         'description': 'Number of active controllers in cluster',
-        'crit': '!= 1'
+        'crit': 'val != 1'
     }, {
         'name': 'offline_partitions_count',
         'object_name': 'kafka.controller:type=KafkaController,\
 name=OfflinePartitionsCount',
         'description': 'Number of offline partitions in cluster',
-        'crit': '!= 1'
+        'crit': 'val != 0'
     }, {
         'name': 'leader_election_rate',
         'object_name': 'kafka.controller:type=ControllerStats,\
 name=LeaderElectionRateAndTimeMs',
         'attribute': 'OneMinuteRate',
         'description': 'Leader election rate and latency in milliseconds',
-        'warn': '>= 100',
-        'crit': '>= 1000'
+        'warn': 'val >= 100',
+        'crit': 'val >= 1000'
     }, {
         'name': 'producer_time',
         'object_name': 'kafka.network:type=RequestMetrics,\
@@ -54,8 +54,8 @@ name=TotalTimeMs,request=Produce',
         'attribute': '99thPercentile',
         'description': 'The top 99th percentile total time \
 in milliseconds to produce a message',
-        'warn': '>= 50',
-        'crit': '>= 500'
+        'warn': 'val >= 50',
+        'crit': 'val >= 500'
     }, {
         'name': 'consumer_fetch_time',
         'object_name': 'kafka.network:type=RequestMetrics,\
@@ -63,15 +63,15 @@ name=TotalTimeMs,request=FetchConsumer',
         'attribute': '99thPercentile',
         'description': 'The top 99th percentile total time\
 in milliseconds for a consumer to fetch data',
-        'warn': '>= 50',
-        'crit': '>= 500'
+        'warn': 'val >= 50',
+        'crit': 'val >= 500'
     }, {
         'name': 'avg_network_processor_idle',
         'object_name': 'kafka.network:name=NetworkProcessorAvgIdlePercent,\
 type=SocketServer',
         'description': 'Average idle percentage of the network processor',
-        'warn': '<= 20',
-        'crit': '<= 10'
+        'warn': 'val <= 20',
+        'crit': 'val <= 10'
     }]
 
     check_cmd = [
@@ -92,9 +92,9 @@ type=SocketServer',
             cmd,
             name=check['name'],
             description=check['description'],
-            context=config["nagios_context"],
+            context=config['nagios_context'],
             servicegroups=(
-                config.get("nagios_servicegroups") or config["nagios_context"]
+                config.get('nagios_servicegroups') or config['nagios_context']
             ),
             unit=unit_name
         )

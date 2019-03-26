@@ -75,10 +75,32 @@ def main():
     else:
         val = call_jmx(args.path, args.obj)
 
+    status = 'Ok'
+    status_code = 0
+
     if args.warning:
-        print(parse_criteria(val, args.warning))
+        if parse_criteria(val, args.warning):
+            status = 'Warning'
+            status_code = 1
     if args.critical:
-        print(parse_criteria(val, args.warning))
+        if parse_criteria(val, args.critical):
+            status = 'Critical'
+            status_code = 2
+
+    print(
+        '%{status}s - "%{val}d"'.format(
+            status=status,
+            val=val
+        ),
+        end=''
+    )
+
+    if status != 'Ok':
+        print(' | %{criteria}s'.format(
+            criteria=args.critical or args.warning
+        ))
+
+    return status_code
 
 
 if __name__ == '__main__':
