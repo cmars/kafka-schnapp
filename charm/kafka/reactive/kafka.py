@@ -19,7 +19,7 @@ from charms.layer.kafka import Kafka, KAFKA_PORT, KAFKA_SNAP
 
 from charmhelpers.core import hookenv, unitdata
 
-from charms.reactive import (set_flag, when, when_not, hook,
+from charms.reactive import (when, when_not, hook,
                              remove_state, set_state)
 from charms.reactive.helpers import data_changed
 
@@ -36,13 +36,35 @@ def disable_bootstrap_zk():
 
 @hook('upgrade-charm')
 def upgrade_charm():
+    remove_state('kafka.started')
     remove_state('kafka.zk.disabled')
 
 
 @hook('config-changed')
 def config_changed():
-    remove_state('kafka.configured')
-    set_flag('kafka.force-reconfigure')
+    remove_state('kafka.started')
+    remove_state('kafka.zk.disabled')
+
+
+@when('kafka.available')
+@when_not('zookeeper.joined')
+def waiting_for_zookeeper():
+    hookenv.status_set('blocked', 'waiting for relation to zookeeper')
+
+
+@when('kafka.available', 'zookeeper.joined')
+@when_not('kafka.started', 'zookeeper.ready')
+def waiting_for_zookeeper_ready(zk):
+    hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
+
+
+@when_not(
+    'kafka.ca.keystore.saved',
+    'kafka.server.keystore.saved'
+)
+@when('kafka.available')
+def waiting_for_certificates():
+    hookenv.status_set('waiting', 'waiting for easyrsa relation')
 
 
 @when(
