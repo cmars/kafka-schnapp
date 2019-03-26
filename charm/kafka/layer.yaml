@@ -4,3 +4,11 @@ includes:
 - 'interface:kafka'
 - 'interface:tls-certificates'
 - 'layer:tls-client'
+- "layer:snap"
+options:
+  snap:
+    core: {}
+    kafka:
+      connect:
+      - ['kafka:removable-media', 'core:removable-media']
+repo: https://github.com/cloud-green/kafka-snap-charm.git
