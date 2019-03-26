@@ -27,4 +27,4 @@ def autostart_service():
             hookenv.status_set('active', 'ready')
             return
 
-    status.blocked('failed to start kafka; check syslog')
+    hookenv.status_set('blocked', 'failed to start kafka; check syslog')

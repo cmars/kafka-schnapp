@@ -57,18 +57,6 @@ def config_changed():
     remove_state('kafka.zk.disabled')
 
 
-@when('kafka.available')
-@when_not('zookeeper.joined')
-def waiting_for_zookeeper():
-    hookenv.status_set('blocked', 'waiting for relation to zookeeper')
-
-
-@when('kafka.available', 'zookeeper.joined')
-@when_not('kafka.started', 'zookeeper.ready')
-def waiting_for_zookeeper_ready(zk):
-    hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
-
-
 @when_not(
     'kafka.ca.keystore.saved',
     'kafka.server.keystore.saved'
