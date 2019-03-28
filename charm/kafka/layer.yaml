@@ -11,6 +11,7 @@ includes:
 options:
   basic:
     packages:
+      - python3
       - default-jre-headless
   snap:
     core: {}

@@ -15,3 +15,43 @@ options:
     description: |-
       A comma-separated list of nagios servicegroups.
       If left empty, the nagios_context will be used as the servicegroup
+  nagios_leader_election_rate_warn:
+    type: string
+    default: '100'
+    description: |-
+      The warning threshold for the leader election rate and latency in ms.
+  nagios_leader_election_rate_crit:
+    type: string
+    default: '1000'
+    description: |-
+      The critical threshold for the leader election rate and latency in ms.
+  nagios_producer_time_warn:
+    type: string
+    default: '50'
+    description: |-
+      The warning threshold for the 99th percentile time it takes to produce a message.
+  nagios_producer_time_crit:
+    type: string
+    default: '500'
+    description: |-
+      The critical threshold for the 99th percentile time it takes to produce a message.
+  nagios_consumer_fetch_time_warn:
+    type: string
+    default: '50'
+    description: |-
+      The warning threshold for the 99th percentile time it takes for a consumer to fetch a message.
+  nagios_consumer_fetch_time_crit:
+    type: string
+    default: '500'
+    description: |-
+      The critical threshold for the 99th percentile time it takes for a consumer to fetch a message.
+  nagios_avg_network_processor_idle_warn:
+    type: string
+    default: '.20'
+    description: |-
+      The warning threshold for average idle percentage of a network processor
+  nagios_avg_network_processor_idle_crit:
+    type: string
+    default: '.10'
+    description: |-
+      The critical threshold for average idle percentage of a network processor

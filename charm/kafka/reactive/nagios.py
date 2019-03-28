@@ -5,8 +5,6 @@ from charmhelpers.core import hookenv
 
 from charms.reactive import when, when_not, set_state
 
-from charms.layer.kafka import KAFKA_SNAP
-
 
 @when('local-monitors.available')
 def local_monitors_available(nagios):
@@ -45,8 +43,8 @@ name=OfflinePartitionsCount',
 name=LeaderElectionRateAndTimeMs',
         'attribute': 'OneMinuteRate',
         'description': 'Leader election rate and latency in milliseconds',
-        'warn': 'val >= 100',
-        'crit': 'val >= 1000'
+        'warn': 'val >= {}'.format(config['nagios_leader_election_rate_warn']),
+        'crit': 'val >= {}'.format(config['nagios_leader_election_rate_crit'])
     }, {
         'name': 'producer_time',
         'object_name': 'kafka.network:type=RequestMetrics,\
@@ -54,8 +52,8 @@ name=TotalTimeMs,request=Produce',
         'attribute': '99thPercentile',
         'description': 'The top 99th percentile total time \
 in milliseconds to produce a message',
-        'warn': 'val >= 50',
-        'crit': 'val >= 500'
+        'warn': 'val >= {}'.format(config['nagios_producer_time_warn']),
+        'crit': 'val >= {}'.format(config['nagios_producer_time_crit'])
     }, {
         'name': 'consumer_fetch_time',
         'object_name': 'kafka.network:type=RequestMetrics,\
@@ -63,24 +61,30 @@ name=TotalTimeMs,request=FetchConsumer',
         'attribute': '99thPercentile',
         'description': 'The top 99th percentile total time\
 in milliseconds for a consumer to fetch data',
-        'warn': 'val >= 50',
-        'crit': 'val >= 500'
+        'warn': 'val >= {}'.format(config['nagios_consumer_fetch_time_warn']),
+        'crit': 'val >= {}'.format(config['nagios_consumer_fetch_time_crit'])
     }, {
         'name': 'avg_network_processor_idle',
         'object_name': 'kafka.network:name=NetworkProcessorAvgIdlePercent,\
 type=SocketServer',
         'description': 'Average idle percentage of the network processor',
-        'warn': 'val <= 20',
-        'crit': 'val <= 10'
+        'warn': 'val >= {}'.format(
+            config['nagios_avg_network_processor_idle_warn']
+        ),
+        'crit': 'val >= {}'.format(
+            config['nagios_avg_network_processor_idle_crit']
+        )
     }]
 
     check_cmd = [
-        '/usr/local/lib/nagios/plugins/check_kafka_jmx.py',
-        '--run-path', '/snap/{}/opt/bin/kafka-run-class.sh'.format(KAFKA_SNAP)
+        '/usr/local/lib/nagios/plugins/check_kafka_jmx.py'
     ]
 
     for check in checks:
-        cmd = check_cmd + ['--object-name', check['object_name']]
+        cmd = check_cmd + [
+            '--object-name', check['object_name'],
+            '--name', check['name']
+        ]
         if 'warn' in check:
             cmd += ['-w', "'{}'".format(check['warn'])]
         if 'crit' in check:

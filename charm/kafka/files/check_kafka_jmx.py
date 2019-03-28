@@ -4,6 +4,7 @@
 
 import sys
 import logging
+import subprocess
 
 from subprocess import check_output
 from argparse import ArgumentParser
@@ -39,11 +40,16 @@ def parse_cli():
         dest='path',
         default='kafka.run-class'
     )
+    parser.add_argument(
+        'n', '--name',
+        dest='name',
+        required=True
+    )
 
     return parser.parse_args()
 
 
-def call_jmx(path, obj, attr=None):
+def call_jmx(path, name, obj, use_float=False, attr=''):
     cmd = [
         path, 'kafka.tools.JmxTool',
         '--one-time', '--report-format', 'csv',
@@ -53,10 +59,14 @@ def call_jmx(path, obj, attr=None):
     if attr:
         cmd += ['--attributes', attr]
 
-    output = check_output(cmd)
+    output = check_output(cmd, stderr=subprocess.PIPE)
 
     line = output.decode('ascii').split('\n')[-2]
-    return float(line.split(',')[1])
+
+    try:
+        return float(line.split(',')[1])
+    except ValueError:
+        return int(line.split(',')[1])
 
 
 def parse_criteria(val, criteria_str):
@@ -70,35 +80,30 @@ def parse_criteria(val, criteria_str):
 def main():
     args = parse_cli()
 
-    if 'attr' in args:
-        val = call_jmx(args.path, args.obj, args.attr)
+    if args.attr:
+        val = call_jmx(args.path, args.name, args.obj, args.attr)
     else:
-        val = call_jmx(args.path, args.obj)
+        val = call_jmx(args.path, args.name, args.obj)
 
-    status = 'Ok'
+    status = 'OK'
     status_code = 0
 
     if args.warning:
         if parse_criteria(val, args.warning):
-            status = 'Warning'
+            status = 'WARNING'
             status_code = 1
     if args.critical:
         if parse_criteria(val, args.critical):
-            status = 'Critical'
+            status = 'CRITICAL'
             status_code = 2
 
     print(
-        '%{status}s - "%{val}d"'.format(
+        '{status} - {key}; | {val};'.format(
             status=status,
+            key=args.name,
             val=val
-        ),
-        end=''
+        )
     )
-
-    if status != 'Ok':
-        print(' | %{criteria}s'.format(
-            criteria=args.critical or args.warning
-        ))
 
     return status_code
 
