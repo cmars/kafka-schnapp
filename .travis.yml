@@ -1,0 +1,16 @@
+dist: bionic
+
+language: java
+
+before_install:
+- sudo apt-get install -y build-essential
+- sudo snap install snapcraft
+
+script:
+- make snap
+
+deploy:
+  provider: snap
+  snap: kafka
+  channel: edge
+  skip_cleanup: true
