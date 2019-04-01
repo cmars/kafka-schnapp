@@ -70,10 +70,10 @@ in milliseconds for a consumer to fetch data',
         'object_name': 'kafka.network:name=NetworkProcessorAvgIdlePercent,\
 type=SocketServer',
         'description': 'Average idle percentage of the network processor',
-        'warn': 'val >= {}'.format(
+        'warn': 'val <= {}'.format(
             config['nagios_avg_network_processor_idle_warn']
         ),
-        'crit': 'val >= {}'.format(
+        'crit': 'val <= {}'.format(
             config['nagios_avg_network_processor_idle_crit']
         )
     }]
