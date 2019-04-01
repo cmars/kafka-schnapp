@@ -3,7 +3,8 @@
 set -eu
 
 if [ ! -f $SNAP_COMMON/server.properties ]; then
-	cp $SNAP/opt/kafka/config/server.properties $SNAP_COMMON/server.properties
+	echo "configuration file $SNAP_COMMON/server.properties does not exist."
+	exit 1
 fi
 
 export PATH=$SNAP/usr/lib/jvm/default-java/bin:$PATH

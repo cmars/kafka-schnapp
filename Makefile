@@ -39,6 +39,7 @@ clean-charm:
 .PHONY: clean-snap
 clean-snap:
 	snapcraft clean
+	rm -f kafka_$(KAFKA_VERSION)_amd64.snap
 
 sysdeps: /snap/bin/charm /snap/bin/snapcraft
 /snap/bin/charm:
