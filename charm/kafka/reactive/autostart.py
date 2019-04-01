@@ -5,7 +5,7 @@ from charmhelpers.core import hookenv
 from charms.reactive import when
 
 
-@when('kafka.available', 'zookeeper.ready')
+@when('kafka.started', 'zookeeper.ready')
 def autostart_service():
     '''
     Attempt to restart the service if it is not running.

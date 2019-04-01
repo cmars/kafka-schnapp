@@ -3,7 +3,8 @@
 set -eu
 
 if [ ! -f $SNAP_COMMON/zookeeper.properties ]; then
-	cp $SNAP/opt/kafka/config/zookeeper.properties $SNAP_COMMON/zookeeper.properties
+	echo "configuration file $SNAP_COMMON/zookeeper.properties does not exist."
+	exit 1
 fi
 
 export PATH=$SNAP/usr/lib/jvm/default-java/bin:$PATH

@@ -6,8 +6,7 @@ from OpenSSL import crypto
 from subprocess import check_call
 
 from charms.layer import tls_client
-from charms.layer.kafka import (keystore_password, KAFKA_SNAP_DATA,
-                                KAFKA_KEYTOOL_PATH)
+from charms.layer.kafka import keystore_password, KAFKA_SNAP_DATA
 
 from charmhelpers.core import hookenv
 
@@ -119,7 +118,7 @@ def import_srv_crt_to_keystore():
                 log('importing pkcs12')
                 # import the pkcs12 into the keystore
                 check_call([
-                    KAFKA_KEYTOOL_PATH,
+                    'keytool',
                     '-v', '-importkeystore',
                     '-srckeystore', str(tmp.name),
                     '-srcstorepass', password,
@@ -152,7 +151,7 @@ def import_ca_crt_to_keystore():
                 "kafka.server.truststore.jks"
             )
             check_call([
-                KAFKA_KEYTOOL_PATH,
+                'keytool',
                 '-import', '-trustcacerts', '-noprompt',
                 '-keystore', ca_keystore,
                 '-storepass', keystore_password(),

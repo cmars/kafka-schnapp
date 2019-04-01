@@ -8,10 +8,17 @@ description: |
 tags:
   - storage
   - streaming
+  - distributed
 subordinate: false
 provides:
   client:
     interface: kafka
+  nrpe-external-master:
+    interface: nrpe-external-master
+    scope: container
+  local-monitors:
+    interface: local-monitors
+    scope: container
 requires:
   certificates:
     interface: tls-certificates

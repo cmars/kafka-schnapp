@@ -1,0 +1,40 @@
+series: bionic
+applications:
+  kafka:
+    charm: ./builds/kafka
+    num_units: 1
+    options:
+      nagios_context: prod-event-bus-ua
+      nagios_servicegroups: webops-prompt-critical,prod-event-bus-ua
+    constraints: mem=16G cores=4
+  nrpe:
+    charm: cs:nrpe
+    options:
+      export_nagios_definitions: true
+      load: "-w 8,8,8 -c 15,15,15"
+      hostgroups: prod-event-bus-ua
+      nagios_host_context: prod-event-bus-ua
+      monitors: |-
+        monitors:
+          remote:
+            nrpe:
+              underreplicated_partitions_count:
+                command: underreplicated_partitions_count
+              active_controller_count:
+                command: active_controller_count
+              offline_partitions_count:
+                command: offline_partitions_count
+              leader_election_rate:
+                command: leader_election_rate
+              producer_time:
+                command: producer_time
+              consumer_fetch_time:
+                command: consumer_fetch_time
+              avg_network_processor_idle:
+                command: avg_network_processor_idle
+  nagios:
+    charm: cs:nagios
+    num_units: 1
+relations:
+- ['nrpe:local-monitors', 'kafka:local-monitors']
+- ['nrpe', 'nagios']
