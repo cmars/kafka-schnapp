@@ -40,16 +40,11 @@ def parse_cli():
         dest='path',
         default='kafka.run-class'
     )
-    parser.add_argument(
-        'n', '--name',
-        dest='name',
-        required=True
-    )
 
     return parser.parse_args()
 
 
-def call_jmx(path, name, obj, use_float=False, attr=''):
+def call_jmx(path, obj, attr=''):
     cmd = [
         path, 'kafka.tools.JmxTool',
         '--one-time', '--report-format', 'csv',
@@ -81,9 +76,9 @@ def main():
     args = parse_cli()
 
     if args.attr:
-        val = call_jmx(args.path, args.name, args.obj, args.attr)
+        val = call_jmx(args.path, args.obj, args.attr)
     else:
-        val = call_jmx(args.path, args.name, args.obj)
+        val = call_jmx(args.path, args.obj)
 
     status = 'OK'
     status_code = 0
@@ -98,9 +93,8 @@ def main():
             status_code = 2
 
     print(
-        '{status} - {key}; | {val};'.format(
+        '{status} - {val};'.format(
             status=status,
-            key=args.name,
             val=val
         )
     )

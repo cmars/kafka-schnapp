@@ -5,6 +5,8 @@ from charmhelpers.core import hookenv
 
 from charms.reactive import when, when_not, set_state
 
+from charms.layer.kafka import KAFKA_SNAP
+
 
 @when('local-monitors.available')
 def local_monitors_available(nagios):
@@ -77,13 +79,16 @@ type=SocketServer',
     }]
 
     check_cmd = [
-        '/usr/local/lib/nagios/plugins/check_kafka_jmx.py'
+        'python3', '/usr/local/lib/nagios/plugins/check_kafka_jmx.py'
     ]
 
     for check in checks:
         cmd = check_cmd + [
-            '--object-name', check['object_name'],
-            '--name', check['name']
+            '--run-path',
+            '/snap/{}/current/opt/kafka/bin/kafka-run-class.sh'.format(
+                KAFKA_SNAP
+            ),
+            '--object-name', check['object_name']
         ]
         if 'warn' in check:
             cmd += ['-w', "'{}'".format(check['warn'])]
