@@ -5,7 +5,6 @@ includes:
 - 'interface:tls-certificates'
 - 'layer:tls-client'
 - 'layer:snap'
-- 'layer:apt'
 - 'interface:nrpe-external-master'
 - 'interface:local-monitors'
 options:
