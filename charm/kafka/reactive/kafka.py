@@ -13,25 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from subprocess import check_call
-
-from charms.layer.kafka import Kafka, KAFKA_PORT, KAFKA_SNAP
+from charms.layer.kafka import Kafka, KAFKA_PORT
 
 from charmhelpers.core import hookenv, unitdata
 
 from charms.reactive import (when, when_not, hook,
                              remove_state, set_state)
 from charms.reactive.helpers import data_changed
-
-
-@when('snap.installed.kafka')
-@when_not('kafka.zk.disabled')
-def disable_bootstrap_zk():
-    check_call([
-        'systemctl', 'disable',
-        'snap.{}.zookeeper.service'.format(KAFKA_SNAP)
-    ])
-    set_state('kafka.zk.disabled')
 
 
 @when('kafka.available')
@@ -50,11 +38,6 @@ def waiting_for_zookeeper_ready(zk):
 def upgrade_charm():
     remove_state('kafka.nrpe_helper.installed')
     remove_state('kafka.started')
-
-
-@hook('config-changed')
-def config_changed():
-    remove_state('kafka.zk.disabled')
 
 
 @when_not(

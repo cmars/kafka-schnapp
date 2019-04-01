@@ -17,7 +17,6 @@ apps:
     plugs: [network, network-bind, removable-media]
   zookeeper:
     command: start-zookeeper-wrapper.bash
-    daemon: simple
     plugs: [network, network-bind, removable-media]
   topics:
     command: script-wrapper.bash

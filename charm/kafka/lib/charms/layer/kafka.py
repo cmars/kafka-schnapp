@@ -31,7 +31,6 @@ from charms.layer import snap
 KAFKA_PORT = 9093
 KAFKA_SNAP = 'kafka'
 KAFKA_SERVICE = 'snap.{}.kafka.service'.format(KAFKA_SNAP)
-BOOTSTRAP_ZK_SERVICE = 'snap.{}.zookeeper.service'.format(KAFKA_SNAP)
 KAFKA_SNAP_DATA = '/var/snap/{}/common'.format(KAFKA_SNAP)
 
 
