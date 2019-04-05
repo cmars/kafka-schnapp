@@ -26,7 +26,6 @@ requires:
     interface: zookeeper
 min-juju-version: "2.4.0"
 series:
-- xenial
 - bionic
 storage:
   logs:
