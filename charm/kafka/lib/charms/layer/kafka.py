@@ -59,6 +59,8 @@ class Kafka(object):
         zks.sort()
         zk_connect = ','.join(zks)
 
+        config = hookenv.config()
+
         context = {
             'broker_id': os.environ['JUJU_UNIT_NAME'].split('/', 1)[1],
             'port': KAFKA_PORT,
@@ -77,7 +79,8 @@ class Kafka(object):
                 KAFKA_SNAP_DATA,
                 'kafka.client.jks'
             ),
-            'bind_addr': hookenv.unit_private_ip()
+            'bind_addr': hookenv.unit_private_ip(),
+            'auto_create_topics': config['auto_create_topics']
         }
 
         render(

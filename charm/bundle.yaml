@@ -6,6 +6,7 @@ applications:
     options:
       nagios_context: prod-event-bus-ua
       nagios_servicegroups: webops-prompt-critical,prod-event-bus-ua
+      auto_create_topics: true
     constraints: mem=16G cores=4
   nrpe:
     charm: cs:nrpe
