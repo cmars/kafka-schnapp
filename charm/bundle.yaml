@@ -20,16 +20,10 @@ applications:
             nrpe:
               underreplicated_partitions_count:
                 command: underreplicated_partitions_count
-              active_controller_count:
-                command: active_controller_count
               offline_partitions_count:
                 command: offline_partitions_count
               leader_election_rate:
                 command: leader_election_rate
-              producer_time:
-                command: producer_time
-              consumer_fetch_time:
-                command: consumer_fetch_time
               avg_network_processor_idle:
                 command: avg_network_processor_idle
   nagios:
