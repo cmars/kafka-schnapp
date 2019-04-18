@@ -4,6 +4,7 @@ applications:
     charm: ./builds/kafka
     num_units: 1
     options:
+      subject_alt_names: testbroker.local
       nagios_context: prod-event-bus-ua
       nagios_servicegroups: webops-prompt-critical,prod-event-bus-ua
     constraints: mem=16G cores=4
