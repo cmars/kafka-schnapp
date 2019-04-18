@@ -4,7 +4,18 @@ options:
     default: true
     type: boolean
     description: |-
-      Should topics be auto created when producing to non-existing topics.
+      Enable auto creation of topic on the server (auto.create.topics.enable)
+  default_partitions:
+    default: 1
+    type: int
+    description: |-
+      The default number of log partitions per topic (num.partitions)
+  default_replication_factor:
+    default: 1
+    type: int
+    description: |-
+      Default replication factor for automatically created topics
+      (default.replication.factor)
 
   # TLS options
   subject_alt_names:

@@ -80,7 +80,9 @@ class Kafka(object):
                 'kafka.client.jks'
             ),
             'bind_addr': hookenv.unit_private_ip(),
-            'auto_create_topics': config['auto_create_topics']
+            'auto_create_topics': config['auto_create_topics'],
+            'default_partitions': config['default_partitions'],
+            'default_replication_factor': config['default_replication_factor'],
         }
 
         render(
