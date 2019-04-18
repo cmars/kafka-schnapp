@@ -22,13 +22,13 @@ from charms.reactive import (when, when_not, hook,
 from charms.reactive.helpers import data_changed
 
 
-@when('kafka.available')
+@when('snap.installed.kafka')
 @when_not('zookeeper.joined')
 def waiting_for_zookeeper():
     hookenv.status_set('blocked', 'waiting for relation to zookeeper')
 
 
-@when('kafka.available', 'zookeeper.joined')
+@when('snap.installed.kafka', 'zookeeper.joined')
 @when_not('kafka.started', 'zookeeper.ready')
 def waiting_for_zookeeper_ready(zk):
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
@@ -44,7 +44,7 @@ def upgrade_charm():
     'kafka.ca.keystore.saved',
     'kafka.server.keystore.saved'
 )
-@when('kafka.available')
+@when('snap.installed.kafka')
 def waiting_for_certificates():
     hookenv.status_set('waiting', 'waiting for easyrsa relation')
 

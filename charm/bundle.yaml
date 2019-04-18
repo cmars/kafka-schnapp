@@ -6,8 +6,17 @@ applications:
     options:
       nagios_context: prod-event-bus-ua
       nagios_servicegroups: webops-prompt-critical,prod-event-bus-ua
-      auto_create_topics: true
     constraints: mem=16G cores=4
+  zk:
+    charm: cs:~yellow/zookeeper-1
+    num_units: 1
+    options:
+      nagios_context: prod-event-bus-ua
+      nagios_servicegroups: webops-prompt-critical,prod-event-bus-ua
+    constraints: mem=4G cores=2
+  easyrsa:
+    charm: cs:~containers/easyrsa
+    num_units: 1
   nrpe:
     charm: cs:nrpe
     options:
@@ -285,7 +294,10 @@ applications:
     charm: cs:prometheus2-8
     num_units: 1
 relations:
+- ['kafka', 'zk']
+- ['kafka', 'easyrsa']
 - ['nrpe:local-monitors', 'kafka:local-monitors']
+- ['nrpe:local-monitors', 'zk:local-monitors']
 - ['nrpe', 'nagios']
 - ['prometheus:target', 'jmx-exporter:website']
 - ['jmx-exporter', 'kafka:juju-info']
