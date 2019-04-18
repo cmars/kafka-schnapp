@@ -1,6 +1,6 @@
 options:
   auto_create_topics:
-    default: false
+    default: true
     type: boolean
     description: |-
       Should topics be auto created when producing to non-existing topics.

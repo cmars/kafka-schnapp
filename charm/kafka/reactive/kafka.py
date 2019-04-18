@@ -22,13 +22,13 @@ from charms.reactive import (when, when_not, hook,
 from charms.reactive.helpers import data_changed
 
 
-@when('kafka.available')
+@when('snap.installed.kafka')
 @when_not('zookeeper.joined')
 def waiting_for_zookeeper():
     hookenv.status_set('blocked', 'waiting for relation to zookeeper')
 
 
-@when('kafka.available', 'zookeeper.joined')
+@when('snap.installed.kafka', 'zookeeper.joined')
 @when_not('kafka.started', 'zookeeper.ready')
 def waiting_for_zookeeper_ready(zk):
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
@@ -44,7 +44,7 @@ def upgrade_charm():
     'kafka.ca.keystore.saved',
     'kafka.server.keystore.saved'
 )
-@when('kafka.available')
+@when('snap.installed.kafka')
 def waiting_for_certificates():
     hookenv.status_set('waiting', 'waiting for easyrsa relation')
 
@@ -69,6 +69,17 @@ def configure_kafka(zk):
     # set app version string for juju status output
     kafka_version = kafka.version()
     hookenv.application_version_set(kafka_version)
+
+
+@when('config.changed', 'zookeeper.ready')
+def config_changed(zk):
+    for k, v in hookenv.config().items():
+        if k.startswith('nagios') and data_changed('kafka.config.{}'.format(k),
+                                                   v):
+            # Trigger a reconfig of nagios if relation established
+            remove_state('kafka.nrpe_helper.registered')
+    # Something must have changed if this hook fired, trigger reconfig
+    remove_state('kafka.started')
 
 
 @when('kafka.started', 'zookeeper.ready')
