@@ -30,6 +30,8 @@ def send_data():
         common_name,
         socket.gethostname(),
     ]
+    extra_names = hookenv.config().get('subject_alt_names', '')
+    sans.extend([n.strip() for n in extra_names.split(',') if n])
 
     # Request a server cert with this information.
     tls_client.request_server_cert(

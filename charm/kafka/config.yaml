@@ -1,9 +1,21 @@
 options:
+  # Broker options
   auto_create_topics:
     default: true
     type: boolean
     description: |-
       Should topics be auto created when producing to non-existing topics.
+
+  # TLS options
+  subject_alt_names:
+    default: ""
+    type: string
+    description: |-
+      Additional subject alternate names (SANs) that should be added to the
+      server certificate requested from the CA. Specified as a comma-separated list
+      of hostnames and/or IP addresses.
+
+  # Nagios options
   nagios_context:
     default: juju
     type: string
