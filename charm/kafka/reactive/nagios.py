@@ -9,11 +9,13 @@ from charms.layer.kafka import KAFKA_SNAP
 
 
 @when('local-monitors.available')
+@when_not('kafka.nrpe_helper.registered')
 def local_monitors_available(nagios):
     setup_nagios(nagios)
 
 
 @when('nrpe-external-master.available')
+@when_not('kafka.nrpe_helper.registered')
 def nrpe_external_master_available(nagios):
     setup_nagios(nagios)
 

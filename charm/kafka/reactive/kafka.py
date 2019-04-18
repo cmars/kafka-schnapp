@@ -71,6 +71,17 @@ def configure_kafka(zk):
     hookenv.application_version_set(kafka_version)
 
 
+@when('config.changed', 'zookeeper.ready')
+def config_changed(zk):
+    for k, v in hookenv.config().items():
+        if k.startswith('nagios') and data_changed('kafka.config.{}'.format(k),
+                                                   v):
+            # Trigger a reconfig of nagios if relation established
+            remove_state('kafka.nrpe_helper.registered')
+    # Something must have changed if this hook fired, trigger reconfig
+    remove_state('kafka.started')
+
+
 @when('kafka.started', 'zookeeper.ready')
 def configure_kafka_zookeepers(zk):
     """Configure ready zookeepers and restart kafka if needed.

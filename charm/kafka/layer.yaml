@@ -15,6 +15,7 @@ options:
   snap:
     core: {}
     kafka:
+      channel: beta
       connect:
       - ['kafka:removable-media', 'core:removable-media']
 repo: https://github.com/cloud-green/kafka-snap-charm.git
