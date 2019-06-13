@@ -2,7 +2,7 @@
 
 It's a snap. It's a charm. It's a schnapp.
 
-This project compiles Kafka 2.1.0 from source into a snap and embeds that into
+This project compiles Kafka 2.2.1 from source into a snap and embeds that into
 a charm that then operates it. Because the snap is installed locally, there is
 no concern over auto-upgrades in snaps.
 
