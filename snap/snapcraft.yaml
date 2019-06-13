@@ -53,7 +53,11 @@ apps:
     plugs: [network, network-bind]
     environment:
       _wrapper_script: kafka-run-class.sh
-
+  kafka-streams-application-reset:
+    command: script-wrapper.bash
+    plugs: [network, network-bind]
+    environment:
+      _wrapper_script: kafka-streams-application-reset.sh
 parts:
   deps:
     stage-packages:
