@@ -15,7 +15,7 @@ schnapp: snap fat-charm
 snap: kafka_$(KAFKA_VERSION)_amd64.snap
 
 kafka_$(KAFKA_VERSION)_amd64.snap:
-	SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY=6G snapcraft
+	snapcraft --use-lxd
 
 .PHONY: fat-charm
 fat-charm: kafka_$(KAFKA_VERSION)_amd64.snap
