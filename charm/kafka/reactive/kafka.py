@@ -49,11 +49,20 @@ def waiting_for_certificates():
     hookenv.status_set('waiting', 'waiting for easyrsa relation')
 
 
+@when_not(
+    'kafka.storage.logs.attached'
+)
+@when('snap.installed.kafka')
+def waiting_for_storage_attach():
+    hookenv.status_set('waiting', 'waiting for storage attachment')
+
+
 @when(
     'snap.installed.kafka',
     'zookeeper.ready',
     'kafka.ca.keystore.saved',
-    'kafka.server.keystore.saved'
+    'kafka.server.keystore.saved',
+    'kafka.storage.logs.attached'
 )
 @when_not('kafka.started')
 def configure_kafka(zk):
@@ -62,7 +71,12 @@ def configure_kafka(zk):
     data_changed('kafka.storage.log_dir', log_dir)
     kafka = Kafka()
     zks = zk.zookeepers()
-    kafka.install(zk_units=zks, log_dir=log_dir)
+    if log_dir:
+        kafka.install(zk_units=zks, log_dir=log_dir)
+    else:
+        hookenv.status_set(
+            'blocked',
+            'unable to get storage dir')
     kafka.open_ports()
     set_state('kafka.started')
     hookenv.status_set('active', 'ready')
