@@ -30,3 +30,8 @@ deploy:
   provider: snap
   snap: kafka_*.snap
   channel: edge
+- skip_cleanup: true
+  provider: script
+  script: bash charm/deploy.bash
+  on:
+    branch: master
