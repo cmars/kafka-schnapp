@@ -1,6 +1,6 @@
 name: kafka
 base: core18
-version: '2.2.1'
+version: '2.1.0'
 summary: Apache Kafka is a distributed streaming platform
 description: |
     Kafka is generally used for two broad classes of applications:
@@ -77,7 +77,7 @@ parts:
     plugin: nil
     source: https://github.com/apache/kafka.git
     source-depth: 1
-    source-tag: 2.2.1
+    source-tag: 2.1.0
     override-build: |-
       export PATH=$(pwd)/../../deps/build/gradle-5.1.1/bin:$PATH
       gradle
@@ -90,7 +90,7 @@ parts:
     - gradle
     plugin: nil
     override-build: |-
-      tarball=$(pwd)/../../gradle/build/core/build/distributions/kafka_2.12-2.2.1.tgz
+      tarball=$(pwd)/../../gradle/build/core/build/distributions/kafka_2.12-2.1.0.tgz
       mkdir -p $SNAPCRAFT_PART_INSTALL/opt/kafka
       (cd $SNAPCRAFT_PART_INSTALL/opt/kafka; tar --strip-components=1 -xzvf $tarball)
     stage:
