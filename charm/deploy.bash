@@ -13,17 +13,15 @@ fi
 
 set -eu
 
-tmphome=$(mktemp -d)
-trap "rm -rf $tmphome" EXIT
-
-export HOME=$tmphome
 mkdir -p $HOME/.local/share/juju
 echo "$STORE_USSO_TOKEN" | base64 -d > $HOME/.local/share/juju/store-usso-token
 chmod 600 $HOME/.local/share/juju/store-usso-token
 
 charm login -B
+charm whoami
 
-CHARM_PUSH=$(charm push $HERE/builds/${CHARM_NAME} --resource ${CHARM_NAME}=$HERE/../${CHARM_NAME}_*.snap cs:~${CS_USER}/${CHARM_NAME})
+RESOURCE_FILE=$(ls -t $HERE/../metamorphosis_*.snap | head -1)
+CHARM_PUSH=$(charm push $HERE/builds/${CHARM_NAME} --resource ${CHARM_NAME}=$RESOURCE_FILE cs:~${CS_USER}/${CHARM_NAME})
 CHARM_REV=$(echo $CHARM_PUSH | awk '/url:/ {print $2}')
 RESOURCE_REV=$(charm list-resources --format json $CHARM_REV | jq -r '.[]|"\(.Name)-\(.Revision)"')
 
