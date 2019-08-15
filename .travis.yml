@@ -1,0 +1,32 @@
+dist: bionic
+
+language: minimal
+
+before_install:
+# Install and set up LXD. LXD is used to build the snap.
+- sudo apt remove -y --purge lxd lxd-client
+- sudo snap install lxd
+- sudo sh -c 'echo PATH=/snap/bin:$PATH >> /etc/environment'
+- sudo lxd waitready;
+- sudo lxd init --auto;
+- sudo usermod -a -G lxd travis;
+# Install other build dependencies
+- sudo snap install charm --classic
+- sudo snap install snapcraft --classic
+- sudo apt-get install -y build-essential flake8
+
+install:
+# Workaround for https://github.com/juju/charm-tools/issues/532
+- git config --global --unset protocol.version
+# Lint check for charm code
+- make lint
+# Build snap and charm
+- sudo su travis -c make
+
+deploy:
+- skip_cleanup: true
+  on:
+    branch: 2.1.0
+  provider: snap
+  snap: kafka_*.snap
+  channel: edge
