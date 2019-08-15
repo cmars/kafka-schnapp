@@ -90,7 +90,7 @@ parts:
     - gradle
     plugin: nil
     override-build: |-
-      tarball=$(pwd)/../../gradle/build/core/build/distributions/kafka_2.12-2.1.0.tgz
+      tarball=$(pwd)/../../gradle/build/core/build/distributions/kafka_2.11-2.1.0.tgz
       mkdir -p $SNAPCRAFT_PART_INSTALL/opt/kafka
       (cd $SNAPCRAFT_PART_INSTALL/opt/kafka; tar --strip-components=1 -xzvf $tarball)
     stage:
