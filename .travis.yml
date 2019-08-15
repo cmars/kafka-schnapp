@@ -34,4 +34,4 @@ deploy:
   provider: script
   script: bash charm/deploy.bash
   on:
-    branch: master
+    branch: 2.1.0
