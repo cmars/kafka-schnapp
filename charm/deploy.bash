@@ -20,7 +20,7 @@ chmod 600 $HOME/.local/share/juju/store-usso-token
 charm login -B
 charm whoami
 
-RESOURCE_FILE=$(ls -t $HERE/../metamorphosis_*.snap | head -1)
+RESOURCE_FILE=$(ls -t $HERE/../${CHARM_NAME}_*.snap | head -1)
 CHARM_PUSH=$(charm push $HERE/builds/${CHARM_NAME} --resource ${CHARM_NAME}=$RESOURCE_FILE cs:~${CS_USER}/${CHARM_NAME})
 CHARM_REV=$(echo $CHARM_PUSH | awk '/url:/ {print $2}')
 RESOURCE_REV=$(charm list-resources --format json $CHARM_REV | jq -r '.[]|"\(.Name)-\(.Revision)"')
