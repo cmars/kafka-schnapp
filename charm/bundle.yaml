@@ -10,6 +10,8 @@ applications:
     constraints: mem=16G cores=4
     resources:
       kafka: ../kafka_2.1.0_amd64.snap
+    storage:
+      logs: rootfs,1G
   zk:
     charm: cs:~zookeeper-distillers/zookeeper-0
     num_units: 1
