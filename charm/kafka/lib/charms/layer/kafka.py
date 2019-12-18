@@ -81,7 +81,7 @@ class Kafka(object):
                                 'unable to validate broker id format')
                             raise
 
-        if not broker_id:
+        if broker_id is None:
             hookenv.status_set(
                 'blocked',
                 'unable to get broker id')
@@ -126,6 +126,13 @@ class Kafka(object):
             perms=0o644,
             context=context
         )
+
+        log4j_file = os.path.join(KAFKA_SNAP_DATA, 'log4j.properties')
+        if config.get('log4j_properties'):
+            with open(log4j_file, 'w') as f:
+                print(config['log4j_properties'], file=f)
+        elif os.path.exists(log4j_file):
+            os.unlink(log4j_file)
 
         if log_dir:
             os.makedirs(log_dir, mode=0o700, exist_ok=True)
