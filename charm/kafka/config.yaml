@@ -89,3 +89,17 @@ options:
     default: '.10'
     description: |-
       The critical threshold for average idle percentage of a network processor
+  inter_broker_protocol_version:
+    type: string
+    default: ''
+    description: |-
+      Specify the message format version the broker will use to append messages
+      to the logs. If set to empty string, the current broker version is used. This
+      setting is useful for coordinating kafka broker upgrades.
+  log_message_format_version:
+    type: string
+    default: ''
+    description: |-
+      Specify the message format version the broker will use to append messages
+      to the logs. If set to empty string, the current broker version is used. This
+      setting is useful for coordinating kafka broker upgrades.

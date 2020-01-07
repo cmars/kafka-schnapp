@@ -109,6 +109,10 @@ class Kafka(object):
             'auto_create_topics': config['auto_create_topics'],
             'default_partitions': config['default_partitions'],
             'default_replication_factor': config['default_replication_factor'],
+            'inter_broker_protocol_version':
+                config.get('inter_broker_protocol_version'),
+            'log_message_format_version':
+                config.get('log_message_format_version'),
         }
 
         render(

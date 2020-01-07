@@ -15,11 +15,19 @@
 
 from charms.layer.kafka import Kafka, KAFKA_PORT
 
+from charms.layer import snap
+
 from charmhelpers.core import hookenv, unitdata
 
-from charms.reactive import (when, when_not, hook,
+from charms.reactive import (when, when_not,
                              remove_state, set_state)
 from charms.reactive.helpers import data_changed
+
+
+@when_not('snap.installed.kafka')
+def install_kafka():
+    snap.install('kafka')
+    snap.connect('kafka:removable-media', 'core:removable-media')
 
 
 @when('snap.installed.kafka')
@@ -32,12 +40,6 @@ def waiting_for_zookeeper():
 @when_not('kafka.started', 'zookeeper.ready')
 def waiting_for_zookeeper_ready(zk):
     hookenv.status_set('waiting', 'waiting for zookeeper to become ready')
-
-
-@hook('upgrade-charm')
-def upgrade_charm():
-    remove_state('kafka.nrpe_helper.installed')
-    remove_state('kafka.started')
 
 
 @when_not(

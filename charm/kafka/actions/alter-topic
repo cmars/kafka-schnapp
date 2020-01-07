@@ -15,15 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import kafkautils
 import subprocess
 
-from pathlib import Path
-
 from charmhelpers.core import hookenv, host
 from charms.reactive import is_state
-from charms.layer.kafka import KAFKA_SERVICE
+from charms.layer.kafka import KAFKA_SERVICE, keystore_password
 
 
 if not is_state('kafka.started'):
@@ -35,9 +32,10 @@ topic_name = hookenv.action_get('topic')
 topic_partitions = hookenv.action_get('partitions')
 
 # Create the topic if kafka is running
-if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE):
+if host.service_available(KAFKA_SERVICE) \
+        and host.service_running(KAFKA_SERVICE):
     zookeepers = kafkautils.get_zookeepers()
-    password = keystore_pass()
+    password = keystore_password()
     try:
         output = subprocess.check_call(['/snap/bin/kafka.topics',
                                         '--zookeeper', zookeepers, '--alter',

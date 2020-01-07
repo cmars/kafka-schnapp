@@ -1,0 +1,22 @@
+#!/usr/local/sbin/charm-env python3
+
+import kafkautils
+
+from charmhelpers.core import hookenv
+
+from charms.reactive import remove_state
+
+from charms.layer import snap
+
+
+if not hookenv.config().get('inter_broker_protocol_version'):
+    kafkautils.fail('inter_broker_protocol_version not configured')
+
+remove_state('kafka.nrpe_helper.installed')
+remove_state('kafka.started')
+remove_state('snap.installed.kafka')
+
+snap.install('kafka')
+snap.connect('kafka:removable-media', 'core:removable-media')
+
+hookenv.action_set({'outcome': 'success'})
