@@ -29,11 +29,12 @@ if not is_state('kafka.started'):
 
 
 # List topics if kafka is running
-if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE):
+if host.service_available(KAFKA_SERVICE) \
+        and host.service_running(KAFKA_SERVICE):
     zookeepers = kafkautils.get_zookeepers()
     try:
         output = subprocess.check_output(['/snap/bin/kafka.topics',
-                        '--zookeeper', zookeepers, '--list'])
+                                          '--zookeeper', zookeepers, '--list'])
     except subprocess.CalledProcessError as e:
         kafkautils.fail('Kafka command failed: {}'.format(e.output))
     else:

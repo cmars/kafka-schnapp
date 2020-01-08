@@ -53,3 +53,7 @@ write-topic:
       description: Data to write to topic
   required: [topic, data]
   additionalProperties: false
+upgrade-kafka:
+  description: Upgrade kafka installation
+show-upgrade:
+  description: Upgrade kafka installation

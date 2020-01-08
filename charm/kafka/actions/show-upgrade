@@ -1,0 +1,49 @@
+#!/usr/local/sbin/charm-env python3
+
+import kafkautils
+
+import re
+import subprocess
+import yaml
+
+from charmhelpers.core import hookenv
+
+from charms.layer import snap
+
+
+result = {}
+
+# Add installed snap version
+try:
+    snap_info_yaml = subprocess.check_output(['snap', 'info', 'kafka'])
+    snap_info = yaml.load(snap_info_yaml, Loader=yaml.SafeLoader)
+    result['installed'] = snap_info.get('installed')
+    if result['installed']:
+        result['installed'] = re.sub(' .*', '', result['installed'])
+except Exception as e:
+    kafkautils.fail('failed to get installed package version: '
+                    '{}'.format(e.output))
+
+# Add available upgrade snap version
+try:
+    snap_file = snap._resource_get('kafka')
+    if not snap_file:
+        result['available'] = None
+    else:
+        snap_info_yaml = subprocess.check_output(['snap', 'info', snap_file])
+        snap_info = yaml.load(snap_info_yaml, Loader=yaml.SafeLoader)
+        result['available'] = snap_info.get('version')
+        if result['available']:
+            result['available'] = re.sub(' .*', '', result['available'])
+except Exception as e:
+    kafkautils.fail('failed to get available package version: '
+                    '{}'.format(e.output))
+
+# Add relevant config options
+cfg = hookenv.config()
+result['inter-broker-protocol-version'] = \
+        cfg.get('inter_broker_protocol_version')
+result['log-message-format-version'] = \
+        cfg.get('log_message_format_version')
+
+hookenv.action_set(result)
