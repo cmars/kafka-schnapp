@@ -131,6 +131,16 @@ class Kafka(object):
             context=context
         )
 
+        render(
+            source='broker.env',
+            target=os.path.join(KAFKA_SNAP_DATA, 'broker.env'),
+            owner='root',
+            perms=0o644,
+            context={
+                'kafka_heap_opts': config.get('kafka_heap_opts', ''),
+            }
+        )
+
         log4j_file = os.path.join(KAFKA_SNAP_DATA, 'log4j.properties')
         if config.get('log4j_properties'):
             with open(log4j_file, 'w') as f:
