@@ -2,7 +2,7 @@
 
 It's a snap. It's a charm. It's a schnapp.
 
-This project compiles Kafka 2.2.1 from source into a snap and embeds that into
+This project compiles Kafka from source into a snap and embeds that into
 a charm that then operates it. Because the snap is installed locally, there is
 no concern over auto-upgrades in snaps.
 
@@ -13,21 +13,10 @@ no concern over auto-upgrades in snaps.
 
 Will build the Kafka snap, and then the charm in `charm/builds/kafka`.
 
-# Operating
+# Quick start
 
-This charm does not require any configuration. It relates to zookeeper and
-scales horizontally by adding units. It supports Juju storage.
-
-The snap uses strict confinement with the removable-media plug to support
-storage.
-
-    juju deploy ./charm/builds/kafka
-    juju deploy zookeeper
-    juju relate kafka zookeeper
-
-The charm also supports storage:
-
-    juju add-storage kafka/0 logs=1G
+    cd charm
+    juju deploy ./bundle.yaml
 
 # Notes
 

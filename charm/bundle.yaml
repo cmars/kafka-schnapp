@@ -9,7 +9,7 @@ applications:
       nagios_servicegroups: webops-prompt-critical,prod-event-bus-ua
     constraints: mem=16G cores=4 root-disk=20G
     resources:
-      kafka: ../kafka_2.2.1_amd64.snap
+      kafka: ../kafka_2.4.0_amd64.snap
     storage:
       logs: rootfs,10G
   zk:
