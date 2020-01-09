@@ -35,7 +35,8 @@ topic_partitions = "1"
 topic_replication = "1"
 
 # Smoke only when kafka is running
-if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE):
+if host.service_available(KAFKA_SERVICE) \
+        and host.service_running(KAFKA_SERVICE):
     # List ZKs
     zookeepers = kafkautils.get_zookeepers()
     if not zookeepers:
@@ -44,17 +45,17 @@ if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE)
     # Create a topic
     try:
         subprocess.check_call(['/snap/bin/kafka.topics',
-                        '--zookeeper', zookeepers, '--create',
-                        '--topic', topic_name,
-                        '--partitions', topic_partitions,
-                        '--replication-factor', topic_replication])
+                               '--zookeeper', zookeepers, '--create',
+                               '--topic', topic_name,
+                               '--partitions', topic_partitions,
+                               '--replication-factor', topic_replication])
     except subprocess.CalledProcessError as e:
         kafkautils.fail('Kafka command failed: {}'.format(e.output))
 
     # List topics
     try:
         subprocess.check_call(['/snap/bin/kafka.topics',
-                        '--zookeeper', zookeepers, '--list'])
+                               '--zookeeper', zookeepers, '--list'])
     except subprocess.CalledProcessError as e:
         kafkautils.fail('Kafka command failed: {}'.format(e.output))
 

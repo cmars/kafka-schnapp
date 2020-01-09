@@ -22,4 +22,8 @@ export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=localhost \
 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false
 -Dcom.sun.management.jmxremote.ssl=false"
 
+if [ -e "$SNAP_COMMON/broker.env" ]; then
+    . $SNAP_COMMON/broker.env
+fi
+
 $SNAP/opt/kafka/bin/kafka-server-start.sh $SNAP_COMMON/server.properties
