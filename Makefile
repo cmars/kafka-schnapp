@@ -15,7 +15,7 @@ schnapp: snap fat-charm
 snap: kafka_$(KAFKA_VERSION)_amd64.snap
 
 kafka_$(KAFKA_VERSION)_amd64.snap:
-	snapcraft --use-lxd
+	SNAPCRAFT_BUILD_ENVIRONMENT=lxd snapcraft
 
 .PHONY: fat-charm
 fat-charm: kafka_$(KAFKA_VERSION)_amd64.snap
@@ -38,8 +38,8 @@ clean-charm:
 
 .PHONY: clean-snap
 clean-snap:
-	snapcraft clean
-	rm -f kafka_$(KAFKA_VERSION)_amd64.snap
+	SNAPCRAFT_BUILD_ENVIRONMENT=lxd snapcraft clean
+	rm -f *.snap
 
 sysdeps: /snap/bin/charm /snap/bin/snapcraft
 /snap/bin/charm:

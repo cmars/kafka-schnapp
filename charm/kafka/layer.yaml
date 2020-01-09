@@ -12,6 +12,7 @@ options:
     packages:
       - python3
       - default-jre-headless
+    include_system_packages: True
   snap:
     core: {}
     kafka:
