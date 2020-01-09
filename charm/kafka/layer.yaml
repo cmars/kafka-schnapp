@@ -15,8 +15,6 @@ options:
     include_system_packages: True
   snap:
     core: {}
-    kafka:
-      channel: beta
-      connect:
-      - ['kafka:removable-media', 'core:removable-media']
+    # Do not include the kafka snap here; charm needs to override behavior to
+    # manage rolling upgrades.
 repo: https://github.com/cloud-green/kafka-snap-charm.git

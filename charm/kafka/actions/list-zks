@@ -28,7 +28,8 @@ if not is_state('kafka.started'):
 
 
 # List zookeepers if kafka is running
-if host.service_available(KAFKA_SERVICE) and host.service_running(KAFKA_SERVICE):
+if host.service_available(KAFKA_SERVICE) \
+        and host.service_running(KAFKA_SERVICE):
     zookeepers = kafkautils.get_zookeepers()
     if zookeepers:
         hookenv.action_set({'raw': zookeepers})
