@@ -16,6 +16,12 @@ options:
     description: |-
       Default replication factor for automatically created topics
       (default.replication.factor)
+  log4j_properties:
+    default: ""
+    type: string
+    description: |-
+      Contents of a custom log4j.properties file for the Kafka brokers. If
+      empty, the default will be used instead.
 
   # TLS options
   subject_alt_names:

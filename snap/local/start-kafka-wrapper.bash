@@ -7,6 +7,11 @@ if [ ! -f $SNAP_COMMON/server.properties ]; then
 	exit 1
 fi
 
+# Use custom log4j properties if found
+if [ -f $SNAP_COMMON/log4j.properties ]; then
+	export KAFKA_LOG4J_OPTS="-Dlog4j.configuration=file:$SNAP_COMMON/log4j.properties"
+fi
+
 export PATH=$SNAP/usr/lib/jvm/default-java/bin:$PATH
 export LOG_DIR=$SNAP_COMMON/log
 
