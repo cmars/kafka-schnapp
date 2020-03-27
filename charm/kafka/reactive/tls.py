@@ -6,12 +6,14 @@ from OpenSSL import crypto
 from subprocess import check_call
 
 from charms.layer import tls_client
-from charms.layer.kafka import keystore_password, KAFKA_SNAP_DATA
+from charms.layer.kafka import (keystore_password, caKeystore,
+                                caPath, crtPath, keyPath,
+                                keystore, keystoreSecret)
 
-from charmhelpers.core import hookenv
+from charmhelpers.core import hookenv, unitdata
 
 from charms.reactive import (when, when_file_changed, remove_state,
-                             when_not, set_state, set_flag)
+                             when_not, set_state)
 from charms.reactive.helpers import data_changed
 
 from charmhelpers.core.hookenv import log
@@ -37,47 +39,28 @@ def send_data():
     tls_client.request_server_cert(
         common_name,
         sans,
-        crt_path=os.path.join(
-            KAFKA_SNAP_DATA,
-            'server.crt'
-        ),
-        key_path=os.path.join(
-            KAFKA_SNAP_DATA,
-            'server.key'
-        )
+        crt_path=crtPath('server'),
+        key_path=keyPath('server')
     )
     tls_client.request_client_cert(
         'system:snap-kafka',
-        crt_path=os.path.join(
-            KAFKA_SNAP_DATA,
-            'client.crt',
-        ),
-        key_path=os.path.join(
-            KAFKA_SNAP_DATA,
-            'client.key'
-        )
+        crt_path=crtPath('client'),
+        key_path=keyPath('client')
     )
 
 
-@when_file_changed(os.path.join(KAFKA_SNAP_DATA, 'kafka.server.jks'))
-@when_file_changed(os.path.join(KAFKA_SNAP_DATA, 'kafka.client.jks'))
+@when_file_changed(keystore('server'))
+@when_file_changed(keystore('client'))
 def restart_when_keystore_changed():
-    remove_state('kafka.configured')
-    set_flag('kafka.force-reconfigure')
+    remove_state('kafka.started')
 
 
 @when('tls_client.certs.changed')
 def import_srv_crt_to_keystore():
     for cert_type in ('server', 'client'):
         password = keystore_password()
-        crt_path = os.path.join(
-            KAFKA_SNAP_DATA,
-            "{}.crt".format(cert_type)
-        )
-        key_path = os.path.join(
-            KAFKA_SNAP_DATA,
-            "{}.key".format(cert_type)
-        )
+        crt_path = crtPath(cert_type)
+        key_path = keyPath(cert_type)
 
         if os.path.isfile(crt_path) and os.path.isfile(key_path):
             with open(crt_path, 'rt') as f:
@@ -102,10 +85,7 @@ def import_srv_crt_to_keystore():
             with tempfile.NamedTemporaryFile() as tmp:
                 log('server certificate changed')
 
-                keystore_path = os.path.join(
-                    KAFKA_SNAP_DATA,
-                    "kafka.{}.jks".format(cert_type)
-                )
+                keystore_path = keystore(cert_type)
 
                 pkcs12 = crypto.PKCS12Type()
                 pkcs12.set_certificate(loaded_cert)
@@ -134,24 +114,20 @@ def import_srv_crt_to_keystore():
 
                 remove_state('tls_client.certs.changed')
                 set_state('kafka.{}.keystore.saved'.format(cert_type))
+                remove_state('kafka.started')
 
 
 @when('tls_client.ca_installed')
 @when_not('kafka.ca.keystore.saved')
 def import_ca_crt_to_keystore():
-    ca_path = '/usr/local/share/ca-certificates/{}.crt'.format(
-        hookenv.service_name()
-    )
+    ca_path = caPath()
 
     if os.path.isfile(ca_path):
         with open(ca_path, 'rt') as f:
             changed = data_changed('ca_certificate', f.read())
 
         if changed:
-            ca_keystore = os.path.join(
-                KAFKA_SNAP_DATA,
-                "kafka.server.truststore.jks"
-            )
+            ca_keystore = caKeystore()
             check_call([
                 'keytool',
                 '-import', '-trustcacerts', '-noprompt',
@@ -163,3 +139,65 @@ def import_ca_crt_to_keystore():
 
             remove_state('tls_client.ca_installed')
             set_state('kafka.ca.keystore.saved')
+
+
+@when('endpoint.certificates.departed')
+def clear_certificates():
+    ca_path = caPath()
+    ca_keystore = caKeystore()
+    ca_keystore_secret = keystoreSecret()
+    if os.path.exists(ca_path):
+        os.remove(ca_path)
+    if os.path.exists(ca_keystore):
+        os.remove(ca_keystore)
+    if os.path.exists(ca_keystore_secret):
+        os.remove(ca_keystore_secret)
+
+    certs_paths = unitdata.kv().get('layer.tls-client.cert-paths', {})
+    for cert_type in ('server', 'client'):
+        crt_path = crtPath(cert_type)
+        key_path = keyPath(cert_type)
+        keystore_path = keystore(cert_type)
+        if os.path.exists(crt_path):
+            os.remove(crt_path)
+        if os.path.exists(key_path):
+            os.remove(key_path)
+        if os.path.exists(keystore_path):
+            os.remove(keystore_path)
+        remove_state('kafka.{}.keystore.saved'.format(cert_type))
+        data_changed('kafka_{}_certificate'.format(cert_type), {})
+
+        for common_name, paths in certs_paths.get(cert_type, {}).items():
+            data_changed('layer.tls-client.'
+                         '{}.{}'.format(cert_type, common_name), {})
+
+    # We need to clean up data because the underlying layer
+    # failes to clear flags and data_changed states when
+    # we remove {charm}-easyrsa relation.
+    unitdata_keys = (
+        'reactive.tls_client',
+        'reactive.data_changed.endpoint.certificates',
+        'reactive.data_changed.ca_certificate',
+        'reactive.data_changed.certificate',
+        'reactive.data_changed.client',
+        'reactive.data_changed.server',
+        'reactive.data_changed.kafka_client_certificate',
+        'reactive.data_changed.kafka_server_certificate',
+        'reactive.states.endpoint.certificates',
+        'reactive.states.tls_client'
+    )
+
+    for k in unitdata_keys:
+        unitdata.kv().unsetrange(None, k)
+
+    cleanup_states = (
+        'kafka.ca.keystore.saved',
+        'tls_client.ca.saved',
+        'tls_client.server.certificate.saved',
+        'tls_client.server.key.saved',
+        'tls_client.client.certificate.saved',
+        'tls_client.client.key.saved',
+        'kafka.started'
+    )
+    for s in cleanup_states:
+        remove_state(s)
