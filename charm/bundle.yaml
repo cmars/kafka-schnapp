@@ -1,3 +1,9 @@
+# This bundle deploys kafka with zookeeper, nagios & prometheus monitoring,
+# and Vault for the TLS PKI.
+#
+# Note that this is an example reference usage of the charm and is not secure
+# or suitable for production use in its current form.
+#
 series: bionic
 applications:
   kafka:
@@ -19,8 +25,14 @@ applications:
       nagios_context: prod-event-bus-ua
       nagios_servicegroups: webops-prompt-critical,prod-event-bus-ua
     constraints: mem=4G cores=2
-  easyrsa:
-    charm: cs:~containers/easyrsa
+  vault:
+    charm: cs:vault
+    num_units: 1
+    options:
+      auto-generate-root-ca-cert: true
+      totally-unsecure-auto-unlock: true
+  vault-db:
+    charm: cs:percona-cluster
     num_units: 1
   nrpe:
     charm: cs:nrpe
@@ -415,7 +427,8 @@ applications:
     num_units: 1
 relations:
 - ['kafka', 'zk']
-- ['kafka', 'easyrsa']
+- ['kafka', 'vault']
+- ['vault', 'vault-db']
 - ['nrpe:local-monitors', 'kafka:local-monitors']
 - ['nrpe:local-monitors', 'zk:local-monitors']
 - ['nrpe', 'nagios']
