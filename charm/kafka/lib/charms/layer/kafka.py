@@ -17,6 +17,7 @@ import os
 import shutil
 import re
 import socket
+from subprocess import check_call
 
 from pathlib import Path
 from base64 import b64encode
@@ -172,6 +173,15 @@ class Kafka(object):
                 'kafka_heap_opts': config.get('kafka_heap_opts', ''),
             }
         )
+
+        render(
+            source='override.conf',
+            target='/etc/systemd/system/snap.kafka.kafka.service.d/override.conf',
+            owner='root',
+            perms=0o644,
+            context={},
+        )
+        check_call(['systemctl', 'daemon-reload'], universal_newlines=True)
 
         log4j_file = os.path.join(KAFKA_SNAP_DATA, 'log4j.properties')
         if config.get('log4j_properties'):

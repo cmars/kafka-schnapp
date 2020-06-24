@@ -6,7 +6,7 @@ all: snap lint charm
 
 .PHONY: lint
 lint:
-	flake8 --ignore=E121,E123,E126,E226,E24,E704,E265 charm/kafka charm/kafka/actions/*
+	flake8 --ignore=E121,E123,E126,E226,E24,E704,E265,E501 charm/kafka charm/kafka/actions/*
 
 .PHONY: schnapp
 schnapp: snap fat-charm
